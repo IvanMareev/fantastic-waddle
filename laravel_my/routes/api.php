@@ -1,5 +1,25 @@
 <?php
 
+/**
+ * @OA\Info(
+ *     version="1.0.0",
+ *     title="Interview API",
+ *     description="API for interview management system"
+ * )
+ * @OA\Server(
+ *     url="/api",
+ *     description="Interview API Server"
+ * )
+ * @OA\SecurityScheme(
+ *     type="http",
+ *     description="Login with email and password to get the authentication token",
+ *     name="Token based based auth",
+ *     in="header",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     securityScheme="bearerAuth",
+ * )
+ */
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InterviewSessionController;
