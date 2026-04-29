@@ -19,7 +19,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
+/vendor/
+/storage/*.log
 _ide_helper.php
 Homestead.json
 Homestead.yaml

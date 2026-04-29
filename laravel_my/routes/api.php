@@ -32,7 +32,7 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/{id}', [QuestionController::class, 'destroy']);
     });
 
-    Route::prefix('Session')->group(function () {
-        Route::post('/', [InterviewSessionController::class, 'startSession']);
+    Route::prefix('interview')->group(function () {
+        Route::post('/start', [InterviewSessionController::class, 'startSession']);
     });
 });
