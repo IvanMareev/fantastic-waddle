@@ -12,6 +12,14 @@ export default function RegisterPage({ onRegister }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleFieldChange = (setter) => (valueOrEvent) => {
+    if (valueOrEvent && typeof valueOrEvent === 'object' && 'target' in valueOrEvent) {
+      setter(valueOrEvent.target.value);
+    } else {
+      setter(valueOrEvent ?? '');
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -38,21 +46,21 @@ export default function RegisterPage({ onRegister }) {
           label="Имя"
           type="text"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={handleFieldChange(setName)}
           required
         />
         <AccessibleTextField
           label="Email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={handleFieldChange(setEmail)}
           required
         />
         <AccessibleTextField
           label="Пароль"
           type="password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={handleFieldChange(setPassword)}
           required
         />
         {error ? <div className="error">{error}</div> : null}

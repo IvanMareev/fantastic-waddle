@@ -11,6 +11,14 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleFieldChange = (setter) => (valueOrEvent) => {
+    if (valueOrEvent && typeof valueOrEvent === 'object' && 'target' in valueOrEvent) {
+      setter(valueOrEvent.target.value);
+    } else {
+      setter(valueOrEvent ?? '');
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -38,14 +46,14 @@ export default function LoginPage({ onLogin }) {
           label="Email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={handleFieldChange(setEmail)}
           required
         />
         <AccessibleTextField
           label="Пароль"
           type="password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={handleFieldChange(setPassword)}
           required
         />
         {error ? <div className="error">{error}</div> : null}
