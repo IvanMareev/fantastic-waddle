@@ -46,21 +46,21 @@ export default function RegisterPage({ onRegister }) {
           label="Имя"
           type="text"
           value={name}
-          onChange={handleFieldChange(setName)}
+          onChange={setName}
           required
         />
         <AccessibleTextField
           label="Email"
           type="email"
           value={email}
-          onChange={handleFieldChange(setEmail)}
+          onChange={setEmail}
           required
         />
         <AccessibleTextField
           label="Пароль"
           type="password"
           value={password}
-          onChange={handleFieldChange(setPassword)}
+          onChange={setPassword}
           required
         />
         {error ? <div className="error">{error}</div> : null}
