@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EnumSessionStatus;
 use App\Enums\InterviewStatus;
-use App\Models\InterviewSession;
-use Illuminate\Http\Request;
+use App\Jobs\ProcessAnswerLLMAnalyzeJob;
 use App\Jobs\ProcessAudioAnswer;
+use App\Jobs\ProcessUploadAudioJob;
+use App\Models\InterviewSession;
+use App\Models\UserAnswer;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 
 class InterviewSessionController extends Controller
 {
@@ -30,7 +35,7 @@ class InterviewSessionController extends Controller
 
         $session = InterviewSession::create([
             'user_id' => $user->id,
-            'status' => InterviewStatus::IN_PROGRESS,
+            'status' => EnumSessionStatus::IN_PROGRESS,
             'started_at' => now(),
         ]);
 
@@ -47,24 +52,26 @@ class InterviewSessionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Сессия интервью успешно создана',
-            'data' => $session->load('session_questions')
+            'data' => $session->load('session_questions.question')
         ], 201);
     }
 
-    public function answerQuestion(Request $request, InterviewSession $session, $questionId)
+    public function answerQuestion(Request $request, InterviewSession $session)
     {
         $validated = $request->validate([
-            'audio' => 'required|file|mimes:mp3,wav,ogg,m4a|max:20480', // макс 20MB
+            'audio' => 'required|file|mimes:mp3,wav,ogg,m4a|max:20480',
+            'session_question_id' => 'required|integer|min:1'
         ]);
 
-        if ($session->status !== InterviewStatus::IN_PROGRESS) {
+        if ($session->status != EnumSessionStatus::IN_PROGRESS->value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Сессия интервью не активна'
+                'message' => 'Сессия интервью не активна',
+                'current_status' => $session->status,
             ], 400);
         }
 
-        $sessionQuestion = $session->session_questions()->where('question_id', $questionId)->first();
+        $sessionQuestion = $session->session_questions()->where('question_id', $validated['session_question_id'])->first();
 
         if (!$sessionQuestion) {
             return response()->json([
@@ -73,22 +80,59 @@ class InterviewSessionController extends Controller
             ], 404);
         }
 
-        // Сохраняем аудиофайл
+        $sessionQuestionId = $sessionQuestion->id;
+
+        $userAnswer = UserAnswer::where('session_question_id', $sessionQuestionId)->first();
+
+
+        if ($userAnswer) {
+            return response()->json([
+                'status' => $userAnswer->processing_step,
+                'message' => 'Ответ на этот вопрос уже дали уже дали',
+                'data' => $userAnswer
+            ]);
+        }
+
         $audioPath = $request->file('audio')->store('interview_answers/' . $session->id, 'public');
 
-        // Опционально: запустить задачу на распознавание речи (например, через Yandex SpeechKit, Google Speech-to-Text)
-        dispatch(new ProcessAudioAnswer($sessionQuestion->id, $audioPath));
 
-        $sessionQuestion->update([
-            'answer_audio_path' => $audioPath,
-            'answered_at' => now(),
-            'answer_text' => null, // будет заполнено асинхронно после распознавания
+        Bus::chain([
+            new ProcessUploadAudioJob(
+                $audioPath,
+                $sessionQuestionId
+            ),
+            new ProcessAudioAnswer(
+                $sessionQuestionId
+            ),
+            new ProcessAnswerLLMAnalyzeJob(
+                $sessionQuestionId
+            )
+        ])->dispatch();
+
+
+        $questionAnswer = UserAnswer::firstOrCreate([
+            'session_question_id' => $sessionQuestionId,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Аудиоответ сохранен, распознавание запущено',
-            'data' => $sessionQuestion
+            'message' => 'Аудио ответ сохранен, распознавание запущено',
+            'data' => $questionAnswer
+        ]);
+    }
+
+
+    public function uploadAudio(Request $request)
+    {
+        $file = $request->file('audio');
+        $path = $file->store('interview_audio', 'public');
+
+        ProcessUploadAudioJob::dispatch($path);
+
+
+        return response()->json([
+            'success' => true,
+            'path' => $path,
         ]);
     }
 }

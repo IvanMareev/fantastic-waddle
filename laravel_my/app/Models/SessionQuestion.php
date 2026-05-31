@@ -12,13 +12,13 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class SessionQuestion
- * 
+ *
  * @property int $id
  * @property int $session_id
  * @property int $question_id
  * @property int $question_order
  * @property Carbon $asked_at
- * 
+ *
  * @property InterviewSession $interview_session
  * @property Question $question
  * @property Collection|UserAnswer[] $user_answers
@@ -38,11 +38,14 @@ class SessionQuestion extends Model
 	];
 
 	protected $fillable = [
-		'session_id',
-		'question_id',
-		'question_order',
-		'asked_at'
-	];
+        'session_id',
+        'question_id',
+        'question_order',
+        'asked_at',
+        'answer_audio_path',
+        'answered_at',
+        'answer_text'
+    ];
 
 	public function interview_session()
 	{

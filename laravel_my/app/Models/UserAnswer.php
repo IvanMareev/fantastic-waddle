@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class UserAnswer
- * 
+ *
  * @property int $id
  * @property int $session_question_id
  * @property string|null $audio_file_url
@@ -21,7 +21,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $ai_explanation
  * @property string|null $ai_audio_url
  * @property Carbon $created_at
- * 
+ * @property string|null $processing_step
+ *
  * @property SessionQuestion $session_question
  * @property Collection|AiEvaluation[] $ai_evaluations
  *
@@ -29,22 +30,25 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserAnswer extends Model
 {
-	protected $table = 'user_answers';
+    protected $table = 'user_answers';
 	public $timestamps = false;
 
 	protected $casts = [
 		'session_question_id' => 'int',
-		'is_correct' => 'bool'
+		'is_correct' => 'bool',
 	];
 
 	protected $fillable = [
-		'session_question_id',
-		'audio_file_url',
-		'transcript',
-		'is_correct',
-		'ai_explanation',
-		'ai_audio_url'
-	];
+        'session_question_id',
+        'audio_file_url',
+        'transcript',
+        'is_correct',
+        'ai_explanation',
+        'ai_audio_url',
+        'user_id',
+        'created_at',
+        'processing_step'
+    ];
 
 	public function session_question()
 	{

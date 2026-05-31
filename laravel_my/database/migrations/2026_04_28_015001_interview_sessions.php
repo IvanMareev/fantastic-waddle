@@ -14,8 +14,6 @@ return new class extends Migration {
                 ->constrained('users')
                 ->cascadeOnDelete();
 
-            $table->foreignId('topic_id')
-                ->constrained('topics');
 
             $table->integer('total_questions')->default(5);
             $table->integer('correct_answers')->default(0);

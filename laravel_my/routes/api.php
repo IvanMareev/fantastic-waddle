@@ -54,5 +54,11 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('interview')->group(function () {
         Route::post('/start', [InterviewSessionController::class, 'startSession']);
+        Route::post('{session}/answer', [InterviewSessionController::class, 'answerQuestion']);
+        Route::get('session/{session}/answer', [InterviewSessionController::class, 'getSessionAnswer']);
+        Route::post('/uploadAudio', [InterviewSessionController::class, 'uploadAudio']);
+
     });
+
+
 });
