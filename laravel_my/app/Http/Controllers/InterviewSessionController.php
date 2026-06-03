@@ -70,8 +70,8 @@ class InterviewSessionController extends Controller
                 'current_status' => $session->status,
             ], 400);
         }
-
-        $sessionQuestion = $session->session_questions()->where('question_id', $validated['session_question_id'])->first();
+        $sessionQuestion = $session->session_questions->where('id',$validated['session_question_id'])->first();
+//        dd(json_encode($sessionQuestion));
 
         if (!$sessionQuestion) {
             return response()->json([
@@ -80,7 +80,7 @@ class InterviewSessionController extends Controller
             ], 404);
         }
 
-        $sessionQuestionId = $sessionQuestion->id;
+        $sessionQuestionId = $validated['session_question_id'];
 
         $userAnswer = UserAnswer::where('session_question_id', $sessionQuestionId)->first();
 

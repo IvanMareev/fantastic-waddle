@@ -9,10 +9,12 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class InterviewSession
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property int $topic_id
@@ -21,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $status
  * @property Carbon $started_at
  * @property Carbon|null $finished_at
- * 
+ *
  * @property User $user
  * @property Topic $topic
  * @property Collection|SessionQuestion[] $session_questions
@@ -52,18 +54,18 @@ class InterviewSession extends Model
 		'finished_at'
 	];
 
-	public function user()
-	{
+	public function user(): BelongsTo
+    {
 		return $this->belongsTo(User::class);
 	}
 
-	public function topic()
-	{
+	public function topic(): BelongsTo
+    {
 		return $this->belongsTo(Topic::class);
 	}
 
-	public function session_questions()
-	{
+	public function session_questions(): HasMany|InterviewSession
+    {
 		return $this->hasMany(SessionQuestion::class, 'session_id');
 	}
 }
