@@ -34,10 +34,18 @@ export default function InterviewSessionPage({ session }) {
     setLoading(true);
 
     try {
-      await uploadAnswer(session.id, Number(selectedQuestionId), audioFile);
-      setMessage('Аудио отправлено, обработка запущена.');
-      setAudioFile(null);
-      setSelectedQuestionId('');
+      const result = await uploadAnswer(session.id, Number(selectedQuestionId), audioFile);
+      const feedback = result.message || 'Аудио отправлено, обработка запущена.';
+
+      if (result.success) {
+        setMessage(feedback);
+        setAudioFile(null);
+        setSelectedQuestionId('');
+      } else if (result.status) {
+        setMessage(feedback);
+      } else {
+        setError(feedback);
+      }
     } catch (err) {
       setError(err.payload?.message || 'Не удалось загрузить аудиофайл.');
     } finally {
@@ -58,6 +66,11 @@ export default function InterviewSessionPage({ session }) {
             <h4>{item.question.question_text}</h4>
             <p>{item.question.expected_answer}</p>
             <div className="badge">Вопрос #{item.question_order}</div>
+            {item.user_answers?.[0]?.processing_step ? (
+              <div className="badge secondary" style={{ marginTop: '8px' }}>
+                Статус: {item.user_answers[0].processing_step}
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
@@ -72,7 +85,7 @@ export default function InterviewSessionPage({ session }) {
           >
             <option value="">-- Вопрос для ответа --</option>
             {questionOptions.map((item) => (
-              <option key={item.id} value={item.question.id}>
+              <option key={item.id} value={item.id}>
                 {item.question.question_text}
               </option>
             ))}
