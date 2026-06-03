@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EnumQuestionStatus;
 use App\Enums\EnumSessionStatus;
 use App\Enums\InterviewStatus;
 use App\Jobs\ProcessAnswerLLMAnalyzeJob;
@@ -70,7 +71,7 @@ class InterviewSessionController extends Controller
                 'current_status' => $session->status,
             ], 400);
         }
-        $sessionQuestion = $session->session_questions->where('id',$validated['session_question_id'])->first();
+        $sessionQuestion = $session->session_questions()->where('id', $validated['session_question_id'])->first();
 //        dd(json_encode($sessionQuestion));
 
         if (!$sessionQuestion) {
@@ -133,6 +134,39 @@ class InterviewSessionController extends Controller
         return response()->json([
             'success' => true,
             'path' => $path,
+        ]);
+    }
+
+    public function getSessionAnswer(Request $request, InterviewSession $session)
+    {
+        $validated = $request->validate([
+            'session_question_id' => 'required|integer|min:1',
+        ]);
+
+        $sessionQuestion = $session->session_questions()->where('id', $validated['session_question_id'])->first();
+
+        if (!$sessionQuestion) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Вопрос не найден в текущей сессии'
+            ], 404);
+        }
+
+        $userAnswer = UserAnswer::where('session_question_id', $sessionQuestion->id)->first();
+
+        if (!$userAnswer) {
+            return response()->json([
+                'success' => false,
+                'status' => EnumQuestionStatus::Uploaded,
+                'message' => 'Ответ еще не найден',
+                'data' => null
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => $userAnswer->processing_step,
+            'message' => 'Информация о статусе ответа получена',
+            'data' => $userAnswer
         ]);
     }
 }
