@@ -2,67 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\StartInterviewSessionData;
 use App\Enums\EnumQuestionStatus;
 use App\Enums\EnumSessionStatus;
 use App\Enums\InterviewStatus;
+use App\Http\Requests\AnswerQuestionRequest;
+use App\Http\Requests\startSessionRequest;
 use App\Jobs\ProcessAnswerLLMAnalyzeJob;
 use App\Jobs\ProcessAudioAnswer;
 use App\Jobs\ProcessUploadAudioJob;
 use App\Models\InterviewSession;
 use App\Models\UserAnswer;
+use App\Services\StartInterviewSessionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 
 class InterviewSessionController extends Controller
 {
-    /**
-     * Начать новую сессию интервью
-     */
-    public function startSession(Request $request)
+    public function startSession(
+        startSessionRequest $request,
+        StartInterviewSessionService $service)
     {
-        $validated = $request->validate([
-            'question_ids' => 'required|array|min:1',
-            'question_ids.*' => 'integer|distinct|exists:questions,id',
-        ]);
-
-        $user = auth()->user();
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Пользователь не авторизован'
-            ], 401);
-        }
-
-        $session = InterviewSession::create([
-            'user_id' => $user->id,
-            'status' => EnumSessionStatus::IN_PROGRESS,
-            'started_at' => now(),
-        ]);
-
-        $sessionQuestions = collect($validated['question_ids'])->map(function ($questionId, $index) {
-            return [
-                'question_id' => $questionId,
-                'question_order' => $index + 1,
-                'asked_at' => now(),
-            ];
-        })->all();
-
-        $session->session_questions()->createMany($sessionQuestions);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Сессия интервью успешно создана',
-            'data' => $session->load('session_questions.question')
-        ], 201);
+        return $service->execute(
+            StartInterviewSessionData::fromRequest($request)
+        );
     }
 
-    public function answerQuestion(Request $request, InterviewSession $session)
+    public function answerQuestion(AnswerQuestionRequest $request, InterviewSession $session)
     {
-        $validated = $request->validate([
-            'audio' => 'required|file|mimes:mp3,wav,ogg,m4a|max:20480',
-            'session_question_id' => 'required|integer|min:1'
-        ]);
+        $validated = $request->validate();
 
         if ($session->status != EnumSessionStatus::IN_PROGRESS->value) {
             return response()->json([
@@ -72,7 +40,6 @@ class InterviewSessionController extends Controller
             ], 400);
         }
         $sessionQuestion = $session->session_questions()->where('id', $validated['session_question_id'])->first();
-//        dd(json_encode($sessionQuestion));
 
         if (!$sessionQuestion) {
             return response()->json([

@@ -49,7 +49,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/', [QuestionController::class, 'store']);
         Route::put('/{id}', [QuestionController::class, 'update']);
         Route::patch('/{id}', [QuestionController::class, 'update']);
-        Route::delete('/{id}', [QuestionController::class, 'destroy']);
+        Route::delete('/{id}', [QuestionController   ::class, 'destroy']);
     });
 
     Route::prefix('interview')->group(function () {
