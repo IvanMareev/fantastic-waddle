@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AccessibleButton from '../components/AccessibleButton.jsx';
 import { uploadAnswer, fetchSessionAnswer } from '../api.js';
 
@@ -6,13 +6,19 @@ export default function InterviewSessionPage({ session }) {
   const [sessionQuestions, setSessionQuestions] = useState(session?.session_questions || []);
   const [selectedQuestionId, setSelectedQuestionId] = useState('');
   const [audioFile, setAudioFile] = useState(null);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [polling, setPolling] = useState(false);
   const [currentStatus, setCurrentStatus] = useState('');
+  const [backendMessage, setBackendMessage] = useState('');
   const [answerResult, setAnswerResult] = useState(null);
   const [pollingQuestionId, setPollingQuestionId] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     setSessionQuestions(session?.session_questions || []);
@@ -30,12 +36,14 @@ export default function InterviewSessionPage({ session }) {
       try {
         const result = await fetchSessionAnswer(session.id, Number(pollingQuestionId));
         const status = result.status || result.data?.processing_step || '';
+        const backendMsg = result.message || '';
 
         if (isCancelled) {
           return;
         }
 
         setCurrentStatus(status);
+        setBackendMessage(backendMsg);
 
         if (result.data) {
           setAnswerResult(result.data);
@@ -204,9 +212,36 @@ export default function InterviewSessionPage({ session }) {
       {answerResult ? (
         <div className="card" style={{ marginTop: '22px', padding: '18px' }}>
           <h3>Результат проверки</h3>
+          {backendMessage ? (
+            <p>
+              <strong>Сообщение от сервера:</strong> {backendMessage}
+            </p>
+          ) : null}
           <p>
             <strong>Статус:</strong> {answerResult.processing_step}
           </p>
+          <p>
+            <strong>ID ответа:</strong> {answerResult.id}
+          </p>
+          <p>
+            <strong>session_question_id:</strong> {answerResult.session_question_id}
+          </p>
+          {answerResult.audio_file_url ? (
+            <p>
+              <strong>Аудиофайл:</strong>{' '}
+              <a href={`/${answerResult.audio_file_url}`} target="_blank" rel="noreferrer">
+                {answerResult.audio_file_url}
+              </a>
+            </p>
+          ) : null}
+          {answerResult.ai_audio_url ? (
+            <p>
+              <strong>AI аудио:</strong>{' '}
+              <a href={`/${answerResult.ai_audio_url}`} target="_blank" rel="noreferrer">
+                {answerResult.ai_audio_url}
+              </a>
+            </p>
+          ) : null}
           {answerResult.transcript ? (
             <p>
               <strong>Транскрипт:</strong> {answerResult.transcript}
@@ -217,6 +252,16 @@ export default function InterviewSessionPage({ session }) {
               <strong>Правильность:</strong> {answerResult.is_correct ? 'Да' : 'Нет'}
             </p>
           ) : null}
+          {answerResult.created_at ? (
+            <p>
+              <strong>Создано:</strong> {answerResult.created_at}
+            </p>
+          ) : null}
+          {answerResult.is_answered !== undefined ? (
+            <p>
+              <strong>is_answered:</strong> {String(answerResult.is_answered)}
+            </p>
+          ) : null}
           {parsedExplanation ? (
             <div>
               <p>
@@ -225,6 +270,41 @@ export default function InterviewSessionPage({ session }) {
               <p>
                 <strong>Общий балл:</strong> {parsedExplanation.summary_score}
               </p>
+              {parsedExplanation.criteria ? (
+                <div style={{ marginTop: '12px' }}>
+                  <strong>Критерии:</strong>
+                  <div style={{ marginLeft: '18px', marginTop: '6px' }}>
+                    {Object.entries(parsedExplanation.criteria).map(([key, value]) => (
+                      <div key={key} style={{ marginBottom: '10px' }}>
+                        <p>
+                          <strong>{key}:</strong> оценка {value.score}
+                        </p>
+                        <p>{value.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {parsedExplanation.strengths?.length ? (
+                <div>
+                  <strong>Сильные стороны:</strong>
+                  <ul>
+                    {parsedExplanation.strengths.map((item, index) => (
+                      <li key={`strength-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {parsedExplanation.weaknesses?.length ? (
+                <div>
+                  <strong>Слабые стороны:</strong>
+                  <ul>
+                    {parsedExplanation.weaknesses.map((item, index) => (
+                      <li key={`weakness-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : answerResult.ai_explanation ? (
             <div>
