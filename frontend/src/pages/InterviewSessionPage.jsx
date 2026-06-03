@@ -92,7 +92,19 @@ export default function InterviewSessionPage({ session }) {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const supportedType = MediaRecorder.isTypeSupported('audio/ogg')
+        ? 'audio/ogg'
+        : MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : '';
+
+      if (!supportedType) {
+        setRecordingError('Ваш браузер не поддерживает запись в нужном формате.');
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { type: supportedType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -103,8 +115,9 @@ export default function InterviewSessionPage({ session }) {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioFile = new File([audioBlob], 'recorded-answer.webm', { type: audioBlob.type });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
+        const extension = mediaRecorder.mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const audioFile = new File([audioBlob], `recorded-answer.${extension}`, { type: audioBlob.type });
         setAudioFile(audioFile);
         setAudioUrl(URL.createObjectURL(audioBlob));
         stream.getTracks().forEach((track) => track.stop());
@@ -127,6 +140,9 @@ export default function InterviewSessionPage({ session }) {
   };
 
   const clearRecording = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
     setAudioFile(null);
     setAudioUrl('');
     setRecordingError('');
@@ -236,13 +252,28 @@ export default function InterviewSessionPage({ session }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-800">Аудиофайл</label>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={(event) => setAudioFile(event.target.files?.[0] || null)}
-            className="input-field"
-          />
+          <label className="block text-sm font-medium text-slate-800">Запись ответа</label>
+          <div className="field-group" style={{ gap: '10px', marginTop: '10px' }}>
+            <AccessibleButton type="button" className="secondary-button" onClick={recording ? stopRecording : startRecording}>
+              {recording ? 'Остановить запись' : 'Начать запись'}
+            </AccessibleButton>
+            {audioFile ? (
+              <AccessibleButton type="button" className="secondary-button" onClick={clearRecording}>
+                Очистить запись
+              </AccessibleButton>
+            ) : null}
+          </div>
+          {recordingError ? <div className="error" style={{ marginTop: '10px' }}>{recordingError}</div> : null}
+          {audioUrl ? (
+            <div style={{ marginTop: '12px' }}>
+              <audio controls src={audioUrl} />
+            </div>
+          ) : null}
+          {!audioUrl && !recording ? (
+            <p className="message" style={{ marginTop: '10px' }}>
+              Нажмите «Начать запись», говорите и затем остановите запись для отправки.
+            </p>
+          ) : null}
         </div>
 
         {message ? <div className="success">{message}</div> : null}
