@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api';
 const TOKEN_KEY = 'fantastic_waddle_token';
 
 function getToken() {
@@ -26,7 +26,6 @@ async function request(path, options = {}) {
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
-    credentials: 'include',
     ...options,
     headers,
   });
@@ -67,6 +66,8 @@ export async function register(name, email, password) {
 
   return data;
 }
+
+
 
 export async function me() {
   const data = await request('/me');

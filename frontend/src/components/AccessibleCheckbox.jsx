@@ -1,14 +1,32 @@
-import { useCheckbox } from '@react-aria/checkbox';
 import { useRef } from 'react';
+import { useCheckbox } from '@react-aria/checkbox';
+import { useToggleState } from '@react-stately/toggle';
 
-export default function AccessibleCheckbox({ label, isSelected, onChange, value, name }) {
-  const ref = useRef();
-  const { inputProps } = useCheckbox({ isSelected, onChange, value, name }, ref);
+export default function AccessibleCheckbox({
+                                               label,
+                                               isSelected,
+                                               onChange
+                                           }) {
+    const inputRef = useRef();
 
-  return (
-    <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 cursor-pointer hover:border-indigo-300">
-      <input {...inputProps} ref={ref} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-      <span>{label}</span>
-    </label>
-  );
+    const state = useToggleState({
+        isSelected,
+        onChange
+    });
+
+    const { inputProps } = useCheckbox(
+        {},
+        state,
+        inputRef
+    );
+
+    return (
+        <label>
+            <input
+                {...inputProps}
+                ref={inputRef}
+            />
+            {label}
+        </label>
+    );
 }
