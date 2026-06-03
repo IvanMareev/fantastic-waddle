@@ -84,6 +84,55 @@ export default function InterviewSessionPage({ session }) {
     };
   }, [pollingQuestionId, session?.id]);
 
+  const startRecording = async () => {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setRecordingError('Ваш браузер не поддерживает запись аудио.');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], 'recorded-answer.webm', { type: audioBlob.type });
+        setAudioFile(audioFile);
+        setAudioUrl(URL.createObjectURL(audioBlob));
+        stream.getTracks().forEach((track) => track.stop());
+        setRecording(false);
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+      setRecordingError('');
+      setMessage('Запись началась, говорите...');
+    } catch (err) {
+      setRecordingError('Не удалось включить микрофон. Проверьте права доступа.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const clearRecording = () => {
+    setAudioFile(null);
+    setAudioUrl('');
+    setRecordingError('');
+    setMessage('Запись очищена.');
+  };
+
   if (!session) {
     return (
       <div className="card form-block">
