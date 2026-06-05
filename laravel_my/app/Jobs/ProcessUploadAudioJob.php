@@ -20,7 +20,7 @@ class ProcessUploadAudioJob implements ShouldQueue
 
     public function __construct(
         private readonly string $path,
-        private readonly string $sessionQuestionId
+        private readonly int $sessionQuestionId
     ) {}
 
     /**
@@ -39,7 +39,7 @@ class ProcessUploadAudioJob implements ShouldQueue
                 $this->sessionQuestionId
             )->first();
 
-            if (!$answer) {
+            if (! $answer) {
                 throw new Exception(
                     "UserAnswer not found for session_question_id={$this->sessionQuestionId}"
                 );
@@ -51,16 +51,16 @@ class ProcessUploadAudioJob implements ShouldQueue
             |--------------------------------------------------------------------------
             */
 
-            $fullPath = storage_path('app/public/' . $this->path);
+            $fullPath = storage_path('app/public/'.$this->path);
 
             Log::info('Resolved full path', [
                 'full_path' => $fullPath,
                 'exists' => file_exists($fullPath),
             ]);
 
-            if (!file_exists($fullPath)) {
+            if (! file_exists($fullPath)) {
                 throw new Exception(
-                    'File not found on disk: ' . $fullPath
+                    'File not found on disk: '.$fullPath
                 );
             }
 
@@ -71,10 +71,10 @@ class ProcessUploadAudioJob implements ShouldQueue
             */
 
             $convertedPath = storage_path(
-                'app/temp/' . uniqid('audio_') . '.ogg'
+                'app/temp/'.uniqid('audio_').'.ogg'
             );
 
-            if (!is_dir(dirname($convertedPath))) {
+            if (! is_dir(dirname($convertedPath))) {
                 mkdir(dirname($convertedPath), 0777, true);
             }
 
@@ -91,7 +91,7 @@ class ProcessUploadAudioJob implements ShouldQueue
                 'output' => implode("\n", $output),
             ]);
 
-            if ($exitCode !== 0 || !file_exists($convertedPath)) {
+            if ($exitCode !== 0 || ! file_exists($convertedPath)) {
                 throw new Exception(
                     'Failed to convert audio using ffmpeg'
                 );
@@ -103,7 +103,7 @@ class ProcessUploadAudioJob implements ShouldQueue
             |--------------------------------------------------------------------------
             */
 
-            $s3Path = 'interview_audio/' . uniqid() . '.ogg';
+            $s3Path = 'interview_audio/'.uniqid().'.ogg';
 
             Log::info('Uploading converted audio to S3', [
                 's3_path' => $s3Path,
@@ -114,13 +114,13 @@ class ProcessUploadAudioJob implements ShouldQueue
                 file_get_contents($convertedPath)
             );
 
-            if (!$result) {
+            if (! $result) {
                 throw new Exception(
                     'S3 upload returned false'
                 );
             }
 
-            if (!Storage::disk('s3')->exists($s3Path)) {
+            if (! Storage::disk('s3')->exists($s3Path)) {
                 throw new Exception(
                     'File not found in S3 after upload'
                 );

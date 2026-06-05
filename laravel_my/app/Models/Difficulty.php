@@ -8,28 +8,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class Difficulty
- * 
+ *
  * @property int $id
  * @property string $name
- * 
  * @property Collection|Question[] $questions
- *
- * @package App\Models
  */
 class Difficulty extends Model
 {
-	protected $table = 'difficulties';
-	public $timestamps = false;
+    protected $table = 'difficulties';
 
-	protected $fillable = [
-		'name'
-	];
+    public $timestamps = false;
 
-	public function questions()
-	{
-		return $this->hasMany(Question::class);
-	}
+    protected $fillable = [
+        'name',
+    ];
+
+    /**
+     * @return HasMany<Question, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
 }

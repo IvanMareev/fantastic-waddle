@@ -31,17 +31,16 @@ class ProcessAudioAnswer implements ShouldQueue
             $folderId = config('services.yandex.folder_id');
             Log::info('ENV var', [$apiKey, $folderId]);
 
-
             $userAnswer = UserAnswer::where(
                 'session_question_id',
                 $this->sessionQuestionId
             )->first();
 
-            if (!$userAnswer) {
+            if (! $userAnswer) {
                 throw new Exception('UserAnswer not found');
             }
 
-            if (!$userAnswer->audio_file_url) {
+            if (! $userAnswer->audio_file_url) {
                 throw new Exception('Audio file url is empty');
             }
 
@@ -58,7 +57,7 @@ class ProcessAudioAnswer implements ShouldQueue
                 'session_question_id' => $this->sessionQuestionId,
             ]);
 
-            if (!Storage::disk('s3')->exists($s3Path)) {
+            if (! Storage::disk('s3')->exists($s3Path)) {
                 throw new Exception("Audio file not found in S3: {$s3Path}");
             }
 
@@ -70,7 +69,7 @@ class ProcessAudioAnswer implements ShouldQueue
 
             $audioContent = Storage::disk('s3')->get($s3Path);
 
-            if (!$audioContent) {
+            if (! $audioContent) {
                 throw new Exception('Failed to read audio content from S3');
             }
 
@@ -84,22 +83,22 @@ class ProcessAudioAnswer implements ShouldQueue
             |--------------------------------------------------------------------------
             */
 
-            $url = 'https://stt.api.cloud.yandex.net/speech/v1/stt:recognize?' . http_build_query([
-                    'lang' => 'ru-RU',
-                    'folderId' => $folderId,
-                    'format' => 'oggopus',
-                ]);
+            $url = 'https://stt.api.cloud.yandex.net/speech/v1/stt:recognize?'.http_build_query([
+                'lang' => 'ru-RU',
+                'folderId' => $folderId,
+                'format' => 'oggopus',
+            ]);
 
             Log::info('STT REQUEST START', [
                 'url' => $url,
             ]);
 
             $userAnswer->update([
-                'processing_step' => EnumQuestionStatus::SpeechToText
+                'processing_step' => EnumQuestionStatus::SpeechToText,
             ]);
 
             $response = Http::withHeaders([
-                'Authorization' => 'Api-Key ' . $apiKey,
+                'Authorization' => 'Api-Key '.$apiKey,
                 'Content-Type' => 'application/octet-stream',
             ])
                 ->withBody($audioContent, 'application/octet-stream')
@@ -117,15 +116,15 @@ class ProcessAudioAnswer implements ShouldQueue
             |--------------------------------------------------------------------------
             */
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new Exception(
-                    'STT request failed: ' . $response->body()
+                    'STT request failed: '.$response->body()
                 );
             }
 
             $data = $response->json();
 
-            if (!$data) {
+            if (! $data) {
                 throw new Exception('Empty STT response');
             }
 
@@ -137,7 +136,7 @@ class ProcessAudioAnswer implements ShouldQueue
 
             $text = trim($data['result'] ?? '');
 
-            if (!$text) {
+            if (! $text) {
 
                 Log::error('STT EMPTY RESULT', [
                     'response' => $data,

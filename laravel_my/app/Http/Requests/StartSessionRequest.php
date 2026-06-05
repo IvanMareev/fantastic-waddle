@@ -6,6 +6,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StartSessionRequest extends FormRequest
 {
+    /**
+     * @return array<string, array<int, string>|string>
+     */
     public function rules(): array
     {
         return [

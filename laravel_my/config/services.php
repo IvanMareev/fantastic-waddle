@@ -40,5 +40,4 @@ return [
         'folder_id' => env('YANDEX_FOLDER_ID'),
     ],
 
-
 ];

@@ -8,10 +8,11 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class AiEvaluation
- * 
+ *
  * @property int $id
  * @property int $user_answer_id
  * @property string|null $prompt_question
@@ -20,31 +21,32 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $model_name
  * @property string|null $raw_response
  * @property Carbon $created_at
- * 
  * @property UserAnswer $user_answer
- *
- * @package App\Models
  */
 class AiEvaluation extends Model
 {
-	protected $table = 'ai_evaluations';
-	public $timestamps = false;
+    protected $table = 'ai_evaluations';
 
-	protected $casts = [
-		'user_answer_id' => 'int'
-	];
+    public $timestamps = false;
 
-	protected $fillable = [
-		'user_answer_id',
-		'prompt_question',
-		'prompt_expected_answer',
-		'prompt_user_answer',
-		'model_name',
-		'raw_response'
-	];
+    protected $casts = [
+        'user_answer_id' => 'int',
+    ];
 
-	public function user_answer()
-	{
-		return $this->belongsTo(UserAnswer::class);
-	}
+    protected $fillable = [
+        'user_answer_id',
+        'prompt_question',
+        'prompt_expected_answer',
+        'prompt_user_answer',
+        'model_name',
+        'raw_response',
+    ];
+
+    /**
+     * @return BelongsTo<UserAnswer, $this>
+     */
+    public function user_answer(): BelongsTo
+    {
+        return $this->belongsTo(UserAnswer::class);
+    }
 }

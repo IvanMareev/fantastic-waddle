@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class TestController extends Controller
 {
-    public function index() {
+    public function index(): JsonResponse
+    {
         return response()->json([
             'ok' => 200,
         ]);

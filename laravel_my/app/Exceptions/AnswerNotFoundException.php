@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Exceptions;
+
+class AnswerNotFoundException extends BusinessException
+{
+    public function __construct()
+    {
+        parent::__construct(
+            __('message.answer_not_found'),
+        );
+    }
+
+    public function getStatusCode(): int
+    {
+        return 404;
+    }
+}

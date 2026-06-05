@@ -1,14 +1,11 @@
 <?php
 
-/**
- * Created by Reliese Model.
- */
-
 namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class Topic
@@ -19,33 +16,36 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
  * @property Collection|Question[] $questions
  * @property Collection|InterviewSession[] $interview_sessions
- *
- * @package App\Models
  */
 class Topic extends Model
 {
-	protected $table = 'topics';
+    protected $table = 'topics';
 
-	protected $casts = [
-		'is_active' => 'bool'
-	];
+    protected $casts = [
+        'is_active' => 'bool',
+    ];
 
-	protected $fillable = [
-		'title',
-		'description',
-		'is_active'
-	];
+    protected $fillable = [
+        'title',
+        'description',
+        'is_active',
+    ];
 
-	public function questions()
-	{
-		return $this->hasMany(Question::class);
-	}
+    /**
+     * @return HasMany<Question, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
 
-	public function interview_sessions()
-	{
-		return $this->hasMany(InterviewSession::class);
-	}
+    /**
+     * @return HasMany<InterviewSession, $this>
+     */
+    public function interview_sessions(): HasMany
+    {
+        return $this->hasMany(InterviewSession::class);
+    }
 }

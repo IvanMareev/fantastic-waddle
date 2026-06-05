@@ -30,7 +30,7 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
             ->firstOrFail();
 
         $userAnswer->update([
-            'processing_step' => EnumQuestionStatus::Analyzing
+            'processing_step' => EnumQuestionStatus::Analyzing,
         ]);
 
         $sessionQuestion = SessionQuestion::findOrFail(
@@ -59,8 +59,6 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
             $promptTemplate->system_prompt
         );
 
-
-
         try {
 
             $folderId = config('services.yandex.folder_id');
@@ -68,12 +66,12 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
             Log::info('YANDEX CONFIG', [
                 'folder_id' => $folderId,
-                'api_key_exists' => !empty($apiKey),
+                'api_key_exists' => ! empty($apiKey),
             ]);
 
             $response = Http::baseUrl('https://ai.api.cloud.yandex.net/v1')
                 ->withHeaders([
-                    'Authorization' => 'Api-Key ' . $apiKey,
+                    'Authorization' => 'Api-Key '.$apiKey,
                     'Content-Type' => 'application/json',
                     'x-folder-id' => $folderId,
                 ])
@@ -94,10 +92,10 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
                 'body' => $response->body(),
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
 
                 throw new Exception(
-                    'Yandex API Error: ' . $response->body()
+                    'Yandex API Error: '.$response->body()
                 );
             }
 
@@ -107,15 +105,13 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
                 'data' => $data,
             ]);
 
-
             $result =
                 $data['output'][0]['content'][0]['text']
                 ?? null;
 
-            if (!$result) {
+            if (! $result) {
                 throw new Exception('LLM result is empty');
             }
-
 
             $result = preg_replace('/^```json\s*/', '', $result);
             $result = preg_replace('/^```\s*/', '', $result);
@@ -128,7 +124,7 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
             if (json_last_error() !== JSON_ERROR_NONE) {
 
                 throw new Exception(
-                    'Invalid JSON from LLM: ' . json_last_error_msg()
+                    'Invalid JSON from LLM: '.json_last_error_msg()
                 );
             }
 
@@ -138,9 +134,8 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
             $userAnswer->update([
                 'ai_explanation' => $result,
-                'is_correct' =>
-                    ($parsedResult['summary_score'] ?? 0) >= 4,
-                'processing_step' => EnumQuestionStatus::Completed
+                'is_correct' => ($parsedResult['summary_score'] ?? 0) >= 4,
+                'processing_step' => EnumQuestionStatus::Completed,
             ]);
 
         } catch (Throwable $e) {

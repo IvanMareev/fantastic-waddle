@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Question;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
@@ -12,19 +13,20 @@ class QuestionController extends Controller
      *     path="/api/question",
      *     tags={"Questions"},
      *     summary="Получить все вопросы",
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Список вопросов"
      *     )
      * )
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $questions = Question::with(['topic', 'difficulty'])->get();
 
         return response()->json([
             'success' => true,
-            'data' => $questions
+            'data' => $questions,
         ]);
     }
 
@@ -33,13 +35,16 @@ class QuestionController extends Controller
      *     path="/api/question/{id}",
      *     tags={"Questions"},
      *     summary="Получить вопрос по ID",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="ID вопроса",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Вопрос найден"
@@ -50,20 +55,20 @@ class QuestionController extends Controller
      *     )
      * )
      */
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
         $question = Question::with(['topic', 'difficulty', 'keywords'])->find($id);
 
-        if (!$question) {
+        if (! $question) {
             return response()->json([
                 'success' => false,
-                'message' => 'Вопрос не найден'
+                'message' => 'Вопрос не найден',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $question
+            'data' => $question,
         ]);
     }
 
@@ -72,23 +77,27 @@ class QuestionController extends Controller
      *     path="/api/question",
      *     tags={"Questions"},
      *     summary="Создать вопрос",
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"topic_id","question_text","expected_answer"},
+     *
      *             @OA\Property(property="topic_id", type="integer"),
      *             @OA\Property(property="difficulty_id", type="integer"),
      *             @OA\Property(property="question_text", type="string"),
      *             @OA\Property(property="expected_answer", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Создано"
      *     )
      * )
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'topic_id' => 'required|exists:topics,id',
@@ -102,7 +111,7 @@ class QuestionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Вопрос успешно создан',
-            'data' => $question
+            'data' => $question,
         ], 201);
     }
 
@@ -111,26 +120,29 @@ class QuestionController extends Controller
      *     path="/api/question/{id}",
      *     tags={"Questions"},
      *     summary="Обновить вопрос",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Обновлено"
      *     )
      * )
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): JsonResponse
     {
         $question = Question::find($id);
 
-        if (!$question) {
+        if (! $question) {
             return response()->json([
                 'success' => false,
-                'message' => 'Вопрос не найден'
+                'message' => 'Вопрос не найден',
             ], 404);
         }
 
@@ -146,7 +158,7 @@ class QuestionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Вопрос успешно обновлён',
-            'data' => $question
+            'data' => $question,
         ]);
     }
 
@@ -155,26 +167,29 @@ class QuestionController extends Controller
      *     path="/api/question/{id}",
      *     tags={"Questions"},
      *     summary="Удалить вопрос",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Удалено"
      *     )
      * )
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         $question = Question::find($id);
 
-        if (!$question) {
+        if (! $question) {
             return response()->json([
                 'success' => false,
-                'message' => 'Вопрос не найден'
+                'message' => 'Вопрос не найден',
             ], 404);
         }
 
@@ -182,7 +197,7 @@ class QuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Вопрос успешно удалён'
+            'message' => 'Вопрос успешно удалён',
         ]);
     }
 
@@ -191,19 +206,22 @@ class QuestionController extends Controller
      *     path="/api/question/topic/{topic_id}",
      *     tags={"Questions"},
      *     summary="Вопросы по теме",
+     *
      *     @OA\Parameter(
      *         name="topic_id",
      *         in="path",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Список вопросов"
      *     )
      * )
      */
-    public function getQuestionsByTopic($topic_id)
+    public function getQuestionsByTopic(int $topic_id): JsonResponse
     {
         $questions = Question::with(['topic', 'difficulty'])
             ->where('topic_id', $topic_id)
@@ -211,7 +229,7 @@ class QuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $questions
+            'data' => $questions,
         ]);
     }
 }

@@ -13,9 +13,7 @@ class ProcessResultTextToSpeechJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(private readonly int  $sessionQuestionId)
-    {
-    }
+    public function __construct(private readonly int $sessionQuestionId) {}
 
     public function handle(): void
     {

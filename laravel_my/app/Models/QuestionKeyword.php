@@ -1,40 +1,38 @@
 <?php
 
-/**
- * Created by Reliese Model.
- */
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class QuestionKeyword
- * 
+ *
  * @property int $id
  * @property int $question_id
  * @property string $keyword
- * 
  * @property Question $question
- *
- * @package App\Models
  */
 class QuestionKeyword extends Model
 {
-	protected $table = 'question_keywords';
-	public $timestamps = false;
+    protected $table = 'question_keywords';
 
-	protected $casts = [
-		'question_id' => 'int'
-	];
+    public $timestamps = false;
 
-	protected $fillable = [
-		'question_id',
-		'keyword'
-	];
+    protected $casts = [
+        'question_id' => 'int',
+    ];
 
-	public function question()
-	{
-		return $this->belongsTo(Question::class);
-	}
+    protected $fillable = [
+        'question_id',
+        'keyword',
+    ];
+
+    /**
+     * @return BelongsTo<Question, $this>
+     */
+    public function question(): BelongsTo
+    {
+        return $this->belongsTo(Question::class);
+    }
 }

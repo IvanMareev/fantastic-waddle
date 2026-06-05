@@ -23,49 +23,56 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $status
  * @property Carbon $started_at
  * @property Carbon|null $finished_at
- *
  * @property User $user
  * @property Topic $topic
  * @property Collection|SessionQuestion[] $session_questions
- *
- * @package App\Models
  */
 class InterviewSession extends Model
 {
-	protected $table = 'interview_sessions';
-	public $timestamps = false;
+    protected $table = 'interview_sessions';
 
-	protected $casts = [
-		'user_id' => 'int',
-		'topic_id' => 'int',
-		'total_questions' => 'int',
-		'correct_answers' => 'int',
-		'started_at' => 'datetime',
-		'finished_at' => 'datetime'
-	];
+    public $timestamps = false;
 
-	protected $fillable = [
-		'user_id',
-		'topic_id',
-		'total_questions',
-		'correct_answers',
-		'status',
-		'started_at',
-		'finished_at'
-	];
+    protected $casts = [
+        'user_id' => 'int',
+        'topic_id' => 'int',
+        'total_questions' => 'int',
+        'correct_answers' => 'int',
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+    ];
 
-	public function user(): BelongsTo
+    protected $fillable = [
+        'user_id',
+        'topic_id',
+        'total_questions',
+        'correct_answers',
+        'status',
+        'started_at',
+        'finished_at',
+    ];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
-		return $this->belongsTo(User::class);
-	}
+        return $this->belongsTo(User::class);
+    }
 
-	public function topic(): BelongsTo
+    /**
+     * @return BelongsTo<Topic, $this>
+     */
+    public function topic(): BelongsTo
     {
-		return $this->belongsTo(Topic::class);
-	}
+        return $this->belongsTo(Topic::class);
+    }
 
-	public function session_questions(): HasMany|InterviewSession
+    /**
+     * @return HasMany<SessionQuestion, $this>
+     */
+    public function sessionQuestions(): HasMany
     {
-		return $this->hasMany(SessionQuestion::class, 'session_id');
-	}
+        return $this->hasMany(SessionQuestion::class, 'session_id');
+    }
 }

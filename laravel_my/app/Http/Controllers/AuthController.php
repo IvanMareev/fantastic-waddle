@@ -5,63 +5,66 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Hash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\JWTGuard;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly JWTGuard $auth,
+    ) {}
 
-    public function register(RegisterRequest $data)
+    public function register(RegisterRequest $request): JsonResponse
     {
 
-        // 2. Создание пользователя
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'name' => $request['name'],
+            'email' => $request['email'],
+            'password' => Hash::make($request['password']),
         ]);
 
-        // 3. Генерация токена (если используешь JWT)
-        $token = auth('api')->login($user);
+        $token = $this->auth->login($user);
 
-        // 4. Ответ
         return response()->json([
             'user' => $user,
             'token' => $token,
         ]);
     }
 
-
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth('api')->attempt($credentials)) {
+        if (! $token = $this->auth->attempt($credentials)) {
             return response()->json([
-                'error' => 'Unauthorized'
+                'error' => 'Unauthorized',
             ], 401);
         }
 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60
+            'expires_in' => $this->auth->factory()->getTTL() * 60,
         ]);
     }
-    public function me()
+
+    public function me(): JsonResponse
     {
-        return response()->json(auth()->user());
+        return response()->json($this->auth->user());
     }
 
-    public function logout()
+    public function logout(): JsonResponse
     {
-        auth()->logout();
+        $this->auth->logout();
+
         return response()->json(['message' => 'Logged out']);
     }
 
-    public function refresh()
+    public function refresh(): JsonResponse
     {
         return response()->json([
-            'token' => auth()->refresh()
+            'token' => $this->auth->refresh(),
         ]);
     }
 }

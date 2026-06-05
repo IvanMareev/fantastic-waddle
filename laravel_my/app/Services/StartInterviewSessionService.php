@@ -2,21 +2,21 @@
 
 namespace App\Services;
 
+use App\DTO\StartInterviewSessionData;
 use App\Enums\EnumSessionStatus;
+use App\Exceptions\UserNotFoundException;
 use App\Models\InterviewSession;
-use Symfony\Component\HttpFoundation\Response;
+use App\Models\User;
 
 readonly class StartInterviewSessionService
 {
-    public function execute($data): object {
+    public function execute(StartInterviewSessionData $data): object
+    {
 
-        $user = $data->user();
+        $user = User::find($data->userId);
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => __('message.user_not_found'),
-            ], Response::HTTP_UNAUTHORIZED);
+        if (! $user) {
+            throw new UserNotFoundException;
         }
 
         $session = InterviewSession::create([
@@ -25,7 +25,7 @@ readonly class StartInterviewSessionService
             'started_at' => now(),
         ]);
 
-        $sessionQuestions = collect($data['question_ids'])->map(function ($questionId, $index) {
+        $sessionQuestions = collect($data->questionIds)->map(function ($questionId, $index) {
             return [
                 'question_id' => $questionId,
                 'question_order' => $index + 1,
@@ -33,12 +33,8 @@ readonly class StartInterviewSessionService
             ];
         })->all();
 
-        $session->session_questions()->createMany($sessionQuestions);
+        $session->sessionQuestions()->createMany($sessionQuestions);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Сессия интервью успешно создана',
-            'data' => $session->load('session_questions.question')
-        ], Response::HTTP_CREATED);
+        return $session->load('sessionQuestions.question');
     }
 }

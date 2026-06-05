@@ -256,6 +256,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'iamcal/sql-parser' => array(
+            'pretty_version' => 'v0.7',
+            'version' => '0.7.0.0',
+            'reference' => '610392f38de49a44dab08dc1659960a29874c4b8',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../iamcal/sql-parser',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
         'illuminate/auth' => array(
             'dev_requirement' => false,
             'replaced' => array(
@@ -477,6 +486,15 @@
             'replaced' => array(
                 0 => '*',
             ),
+        ),
+        'larastan/larastan' => array(
+            'pretty_version' => 'v3.10.0',
+            'version' => '3.10.0.0',
+            'reference' => '2970f83398154178a739609c244577267c7ee8eb',
+            'type' => 'phpstan-extension',
+            'install_path' => __DIR__ . '/../larastan/larastan',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'laravel/framework' => array(
             'pretty_version' => 'v13.7.0',
@@ -807,6 +825,15 @@
             'install_path' => __DIR__ . '/../phpstan/phpdoc-parser',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'phpstan/phpstan' => array(
+            'pretty_version' => '2.2.1',
+            'version' => '2.2.1.0',
+            'reference' => 'dea9c8f2d25cc849391042b71e429c1a4bf82660',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpstan/phpstan',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'phpunit/php-code-coverage' => array(
             'pretty_version' => '12.5.6',

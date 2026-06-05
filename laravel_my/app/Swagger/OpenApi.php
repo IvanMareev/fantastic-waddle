@@ -16,6 +16,4 @@ use OpenApi\Annotations as OA;
  *     description="Local API Server"
  * )
  */
-class OpenApi
-{
-}
+class OpenApi {}

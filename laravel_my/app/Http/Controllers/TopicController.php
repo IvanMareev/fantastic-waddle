@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Topic;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TopicController extends Controller
@@ -10,7 +11,7 @@ class TopicController extends Controller
     /**
      * Получить список всех тем
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $topics = Topic::all();
 
@@ -20,7 +21,7 @@ class TopicController extends Controller
     /**
      * Создать новую тему
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
@@ -43,13 +44,13 @@ class TopicController extends Controller
     /**
      * Получить одну тему по ID
      */
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
         $topic = Topic::find($id);
 
-        if (!$topic) {
+        if (! $topic) {
             return response()->json([
-                'message' => 'Topic not found'
+                'message' => 'Topic not found',
             ], 404);
         }
 
@@ -59,13 +60,13 @@ class TopicController extends Controller
     /**
      * Обновить тему
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): JsonResponse
     {
         $topic = Topic::find($id);
 
-        if (!$topic) {
+        if (! $topic) {
             return response()->json([
-                'message' => 'Topic not found'
+                'message' => 'Topic not found',
             ], 404);
         }
 
@@ -86,20 +87,20 @@ class TopicController extends Controller
     /**
      * Удалить тему
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         $topic = Topic::find($id);
 
-        if (!$topic) {
+        if (! $topic) {
             return response()->json([
-                'message' => 'Topic not found'
+                'message' => 'Topic not found',
             ], 404);
         }
 
         $topic->delete();
 
         return response()->json([
-            'message' => 'Topic deleted successfully'
+            'message' => 'Topic deleted successfully',
         ]);
     }
 }
