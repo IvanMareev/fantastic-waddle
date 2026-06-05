@@ -50,7 +50,7 @@ export default function ResultModal({ open, onClose, result }) {
                 <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 <path className="circle" strokeDasharray={`${overallPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: colorFor(summary) }} />
               </svg>
-              <div className="circular-center">
+              <div className="circular-below">
                 <div className="score-num">{summary != null ? `${summary}/10` : '—'}</div>
                 <div className="score-text">{scoreText(summary)}</div>
                 <div className="answer-status">{data.is_correct ? '✅ Ответ верный' : '❌ Ответ неверный'}</div>
@@ -60,23 +60,24 @@ export default function ResultModal({ open, onClose, result }) {
             <div className="transcript-card card">
               <h4>Ваш ответ</h4>
               <div className="transcript-text">{data.transcript || 'Ответ не распознан.'}</div>
-              {data.audio_file_url ? (
-                <audio controls src={`/${data.audio_file_url}`} style={{ marginTop: 8 }} />
-              ) : null}
             </div>
           </div>
 
           <div className="criteria-section">
             <h4>Детальная оценка по критериям</h4>
-            <div className="criteria-table">
+            <div className="criteria-grid">
               {Object.entries(criteria).map(([k, v]) => (
-                <div key={k} className="criteria-row">
+                <div key={k} className="criteria-card">
                   <div className="criteria-key">{k}</div>
-                  <div className="criteria-score">{v.score}/10</div>
-                  <div className="criteria-bar">
-                    <div className="criteria-fill" style={{ width: `${clamp(v.score,0,10) * 10}%`, background: colorFor(v.score) }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                    <div style={{ fontWeight:700 }}>{v.score}/10</div>
+                    <div style={{ flex: 1 }}>
+                      <div className="criteria-bar-outer">
+                        <div className="criteria-bar-inner" style={{ width: `${clamp(v.score,0,10) * 10}%`, background: colorFor(v.score) }} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="criteria-comment muted">{v.comment}</div>
+                  <div className="criteria-comment muted" style={{ marginTop: 8 }}>{v.comment}</div>
                 </div>
               ))}
             </div>
