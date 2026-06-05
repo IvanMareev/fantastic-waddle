@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import TopicsPage from './pages/TopicsPage.jsx';
 import InterviewSessionPage from './pages/InterviewSessionPage.jsx';
+import ResultsPage from './pages/ResultsPage.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -48,6 +49,7 @@ function App() {
               <Link to="/">Главная</Link>
               <Link to="/topics">Темы и вопросы</Link>
               <Link to="/session">Сессия</Link>
+              <Link to="/session/results">Результаты</Link>
               <button className="secondary-button" type="button" onClick={handleLogout}>
                 Выйти
               </button>
@@ -83,6 +85,16 @@ function App() {
           element={
             user ? (
               <InterviewSessionPage session={session} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/session/results"
+          element={
+            user ? (
+              <ResultsPage session={session} />
             ) : (
               <Navigate to="/login" replace />
             )
