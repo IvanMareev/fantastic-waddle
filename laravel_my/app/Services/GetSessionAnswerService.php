@@ -16,7 +16,7 @@ class GetSessionAnswerService
     public function execute(InterviewSession $session, GetSessionAnswerData $data): UserAnswer
     {
         /** @var SessionQuestion|null $sessionQuestion */
-        $sessionQuestion = $session->sessionQuestions()->where('id', $data['session_question_id'])->first();
+        $sessionQuestion = $session->sessionQuestions()->where('id', $data->sessionQuestionId)->first();
 
         if (! $sessionQuestion) {
             throw new SessionQuestionNotFoundException;
