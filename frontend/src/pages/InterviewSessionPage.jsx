@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import AccessibleButton from '../components/AccessibleButton.jsx';
 import { uploadAnswer, fetchSessionAnswer } from '../api.js';
+import RecordingOrb from '../components/RecordingOrb.jsx';
+import ResultModal from '../components/ResultModal.jsx';
+import InfoCard from '../components/InfoCard.jsx';
+import SoundToggle from '../components/SoundToggle.jsx';
 
 export default function InterviewSessionPage({ session }) {
   const [sessionQuestions, setSessionQuestions] = useState(session?.session_questions || []);
-  const [selectedQuestionId, setSelectedQuestionId] = useState('');
   const [audioFile, setAudioFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [recording, setRecording] = useState(false);
@@ -19,6 +22,13 @@ export default function InterviewSessionPage({ session }) {
   const [pollingQuestionId, setPollingQuestionId] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const [mediaStream, setMediaStream] = useState(null);
+  const [started, setStarted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     setSessionQuestions(session?.session_questions || []);
@@ -60,6 +70,10 @@ export default function InterviewSessionPage({ session }) {
           setPolling(false);
           setPollingQuestionId(null);
           setMessage(status === 'completed' ? 'Ответ обработан.' : 'Обработка ответа завершилась с ошибкой.');
+          if (status === 'completed') {
+            setModalOpen(true);
+            playUiSound('result');
+          }
         }
       } catch (err) {
         if (isCancelled) {
@@ -84,13 +98,23 @@ export default function InterviewSessionPage({ session }) {
     };
   }, [pollingQuestionId, session?.id]);
 
+  useEffect(() => {
+    if (recording) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+
+    return () => clearInterval(timerRef.current);
+  }, [recording]);
+
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         setRecordingError('Ваш браузер не поддерживает запись аудио.');
         return;
       }
-
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const supportedType = MediaRecorder.isTypeSupported('audio/ogg')
         ? 'audio/ogg'
@@ -108,6 +132,11 @@ export default function InterviewSessionPage({ session }) {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      // keep stream for visualizer
+      setMediaStream(stream);
+
+      playUiSound('start');
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -120,8 +149,11 @@ export default function InterviewSessionPage({ session }) {
         const audioFile = new File([audioBlob], `recorded-answer.${extension}`, { type: audioBlob.type });
         setAudioFile(audioFile);
         setAudioUrl(URL.createObjectURL(audioBlob));
+        // stop tracks but keep visualizer stream cleared
         stream.getTracks().forEach((track) => track.stop());
+        setMediaStream(null);
         setRecording(false);
+        playUiSound('stop');
       };
 
       mediaRecorder.start();
@@ -149,6 +181,35 @@ export default function InterviewSessionPage({ session }) {
     setMessage('Запись очищена.');
   };
 
+  const playUiSound = (type) => {
+    if (!soundEnabled) return;
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.connect(g);
+      g.connect(ac.destination);
+      if (type === 'start') {
+        o.frequency.value = 880;
+        g.gain.value = 0.02;
+        o.start();
+        setTimeout(() => { o.stop(); ac.close(); }, 120);
+      } else if (type === 'stop') {
+        o.frequency.value = 660;
+        g.gain.value = 0.02;
+        o.start();
+        setTimeout(() => { o.stop(); ac.close(); }, 160);
+      } else if (type === 'result') {
+        o.frequency.value = 1040;
+        g.gain.value = 0.02;
+        o.start();
+        setTimeout(() => { o.stop(); ac.close(); }, 220);
+      }
+    } catch (e) {
+      // ignore sound failures
+    }
+  };
+
   if (!session) {
     return (
       <div className="card form-block">
@@ -172,34 +233,54 @@ export default function InterviewSessionPage({ session }) {
       return null;
     }
   };
+  const parsedExplanation = parseAiExplanation(answerResult?.ai_explanation);
 
-  const handleUpload = async (event) => {
-    event.preventDefault();
+  const translateStatus = (s) => {
+    if (!s) return '';
+    const map = {
+      uploaded: 'Загружено',
+      processing: 'Обработка',
+      completed: 'Готово',
+      failed: 'Ошибка',
+    };
+    return map[s] || s;
+  };
+
+  const currentQuestion = questionOptions[currentIndex];
+
+  const handleStartInterview = () => {
+    setStarted(true);
+    setCurrentIndex(0);
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e?.preventDefault?.();
     setError('');
     setMessage('');
 
-    if (!selectedQuestionId || !audioFile) {
-      setError('Выберите вопрос и загрузите аудиофайл.');
+    if (!currentQuestion || !audioFile) {
+      setError('Запишите ответ перед отправкой.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await uploadAnswer(session.id, Number(selectedQuestionId), audioFile);
+      const result = await uploadAnswer(session.id, Number(currentQuestion.id), audioFile);
       const feedback = result.message || 'Аудио отправлено, проверка запущена.';
 
       if (result.success) {
         setMessage(feedback);
         setAnswerResult(null);
         setCurrentStatus('uploaded');
-        setPollingQuestionId(selectedQuestionId);
+        setPollingQuestionId(currentQuestion.id);
         setAudioFile(null);
-        setSelectedQuestionId('');
+        setAudioUrl('');
+        playUiSound('start');
       } else if (result.status) {
         setMessage(feedback);
         setCurrentStatus(result.status);
-        setPollingQuestionId(selectedQuestionId);
+        setPollingQuestionId(currentQuestion.id);
       } else {
         setError(feedback);
       }
@@ -210,190 +291,81 @@ export default function InterviewSessionPage({ session }) {
     }
   };
 
-  const parsedExplanation = parseAiExplanation(answerResult?.ai_explanation);
+  const onModalClose = () => {
+    setModalOpen(false);
+    setAnswerResult(null);
+    // advance to next question
+    setCurrentIndex((i) => Math.min(i + 1, questionOptions.length));
+  };
 
   return (
-    <div className="card form-block">
-      <h2 className="section-title">Сессия интервью #{session.id}</h2>
-      <div className="message">
-        Статус: <span className="badge">{session.status}</span>
+    <div className="card form-block interview-page">
+      <div className="header-row">
+        <h2 className="section-title">Сессия интервью #{session.id}</h2>
+        <div className="controls">
+          <SoundToggle onChange={(v) => setSoundEnabled(v)} />
+        </div>
       </div>
 
-      <div className="card-grid" style={{ marginTop: '20px' }}>
-        {questionOptions.map((item) => (
-          <div key={item.id} className="card" style={{ padding: '18px' }}>
-            <h4>{item.question.question_text}</h4>
-            <p>{item.question.expected_answer}</p>
-            <div className="badge">Вопрос #{item.question_order}</div>
-            {item.user_answers?.[0]?.processing_step ? (
-              <div className="badge secondary" style={{ marginTop: '8px' }}>
-                Статус: {item.user_answers[0].processing_step}
+      <div className="message">
+        Статус сессии: <span className="badge">{translateStatus(session.status)}</span>
+      </div>
+
+      {!started ? (
+        <div style={{ marginTop: 18 }}>
+          <InfoCard total={questionOptions.length} avgSeconds={30} onStart={handleStartInterview} />
+        </div>
+      ) : currentIndex >= questionOptions.length ? (
+        <div className="card" style={{ marginTop: 18 }}>
+          <h3>Интервью завершено</h3>
+          <p>Вы прошли все вопросы сессии.</p>
+        </div>
+      ) : (
+        <div className="interview-stage" style={{ marginTop: 18 }}>
+          <div className="question-panel card">
+            <div className="question-meta">Вопрос {currentIndex + 1} из {questionOptions.length}</div>
+            <h3 className="question-title">{currentQuestion.question.question_text}</h3>
+            <p className="muted">{currentQuestion.question.expected_answer}</p>
+            <div className="timer">Осталось времени: {Math.max(0, 30 - elapsed)} секунд</div>
+          </div>
+
+          <div className="rec-panel card">
+            <RecordingOrb stream={mediaStream} isRecording={recording} />
+            <div className="rec-controls">
+              <AccessibleButton type="button" className="secondary-button" onClick={recording ? stopRecording : startRecording}>
+                {recording ? 'Остановить запись' : 'Начать запись'}
+              </AccessibleButton>
+              {audioFile ? (
+                <AccessibleButton type="button" className="secondary-button" onClick={clearRecording}>
+                  Очистить запись
+                </AccessibleButton>
+              ) : null}
+            </div>
+            {recordingError ? <div className="error" style={{ marginTop: '10px' }}>{recordingError}</div> : null}
+            {audioUrl ? (
+              <div style={{ marginTop: '12px' }}>
+                <audio controls src={audioUrl} />
               </div>
             ) : null}
-          </div>
-        ))}
-      </div>
 
-      <form onSubmit={handleUpload} className="field-group" style={{ marginTop: '22px' }}>
-        <div>
-          <label className="block text-sm font-medium text-slate-800">Выберите вопрос</label>
-          <select
-            className="input-field"
-            value={selectedQuestionId}
-            onChange={(event) => setSelectedQuestionId(event.target.value)}
-          >
-            <option value="">-- Вопрос для ответа --</option>
-            {questionOptions.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.question.question_text}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div style={{ marginTop: 12 }}>
+              {message ? <div className="success">{message}</div> : null}
+              {currentStatus ? (
+                <div className="message">Статус проверки: <strong>{translateStatus(currentStatus)}</strong></div>
+              ) : null}
+              {error ? <div className="error">{error}</div> : null}
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-800">Запись ответа</label>
-          <div className="field-group" style={{ gap: '10px', marginTop: '10px' }}>
-            <AccessibleButton type="button" className="secondary-button" onClick={recording ? stopRecording : startRecording}>
-              {recording ? 'Остановить запись' : 'Начать запись'}
-            </AccessibleButton>
-            {audioFile ? (
-              <AccessibleButton type="button" className="secondary-button" onClick={clearRecording}>
-                Очистить запись
+            <div style={{ marginTop: 14 }}>
+              <AccessibleButton type="button" onClick={handleUploadSubmit} disabled={isBusy || !audioFile}>
+                {isBusy ? 'Ожидание...' : 'Отправить ответ'}
               </AccessibleButton>
-            ) : null}
+            </div>
           </div>
-          {recordingError ? <div className="error" style={{ marginTop: '10px' }}>{recordingError}</div> : null}
-          {audioUrl ? (
-            <div style={{ marginTop: '12px' }}>
-              <audio controls src={audioUrl} />
-            </div>
-          ) : null}
-          {!audioUrl && !recording ? (
-            <p className="message" style={{ marginTop: '10px' }}>
-              Нажмите «Начать запись», говорите и затем остановите запись для отправки.
-            </p>
-          ) : null}
         </div>
+      )}
 
-        {message ? <div className="success">{message}</div> : null}
-        {currentStatus ? (
-          <div className="message">
-            Статус проверки: <strong>{currentStatus}</strong>
-          </div>
-        ) : null}
-        {error ? <div className="error">{error}</div> : null}
-
-        <AccessibleButton type="submit" disabled={isBusy}>
-          {isBusy ? 'Ожидание...' : 'Загрузить аудио ответа'}
-        </AccessibleButton>
-      </form>
-
-      {answerResult ? (
-        <div className="card" style={{ marginTop: '22px', padding: '18px' }}>
-          <h3>Результат проверки</h3>
-          {backendMessage ? (
-            <p>
-              <strong>Сообщение от сервера:</strong> {backendMessage}
-            </p>
-          ) : null}
-          <p>
-            <strong>Статус:</strong> {answerResult.processing_step}
-          </p>
-          <p>
-            <strong>ID ответа:</strong> {answerResult.id}
-          </p>
-          <p>
-            <strong>session_question_id:</strong> {answerResult.session_question_id}
-          </p>
-          {answerResult.audio_file_url ? (
-            <p>
-              <strong>Аудиофайл:</strong>{' '}
-              <a href={`/${answerResult.audio_file_url}`} target="_blank" rel="noreferrer">
-                {answerResult.audio_file_url}
-              </a>
-            </p>
-          ) : null}
-          {answerResult.ai_audio_url ? (
-            <p>
-              <strong>AI аудио:</strong>{' '}
-              <a href={`/${answerResult.ai_audio_url}`} target="_blank" rel="noreferrer">
-                {answerResult.ai_audio_url}
-              </a>
-            </p>
-          ) : null}
-          {answerResult.transcript ? (
-            <p>
-              <strong>Транскрипт:</strong> {answerResult.transcript}
-            </p>
-          ) : null}
-          {answerResult.is_correct !== null ? (
-            <p>
-              <strong>Правильность:</strong> {answerResult.is_correct ? 'Да' : 'Нет'}
-            </p>
-          ) : null}
-          {answerResult.created_at ? (
-            <p>
-              <strong>Создано:</strong> {answerResult.created_at}
-            </p>
-          ) : null}
-          {answerResult.is_answered !== undefined ? (
-            <p>
-              <strong>is_answered:</strong> {String(answerResult.is_answered)}
-            </p>
-          ) : null}
-          {parsedExplanation ? (
-            <div>
-              <p>
-                <strong>Итог:</strong> {parsedExplanation.final_comment}
-              </p>
-              <p>
-                <strong>Общий балл:</strong> {parsedExplanation.summary_score}
-              </p>
-              {parsedExplanation.criteria ? (
-                <div style={{ marginTop: '12px' }}>
-                  <strong>Критерии:</strong>
-                  <div style={{ marginLeft: '18px', marginTop: '6px' }}>
-                    {Object.entries(parsedExplanation.criteria).map(([key, value]) => (
-                      <div key={key} style={{ marginBottom: '10px' }}>
-                        <p>
-                          <strong>{key}:</strong> оценка {value.score}
-                        </p>
-                        <p>{value.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {parsedExplanation.strengths?.length ? (
-                <div>
-                  <strong>Сильные стороны:</strong>
-                  <ul>
-                    {parsedExplanation.strengths.map((item, index) => (
-                      <li key={`strength-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {parsedExplanation.weaknesses?.length ? (
-                <div>
-                  <strong>Слабые стороны:</strong>
-                  <ul>
-                    {parsedExplanation.weaknesses.map((item, index) => (
-                      <li key={`weakness-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          ) : answerResult.ai_explanation ? (
-            <div>
-              <strong>AI объяснение:</strong>
-              <pre style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{answerResult.ai_explanation}</pre>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <ResultModal open={modalOpen && answerResult} onClose={onModalClose} result={answerResult} soundEnabled={soundEnabled} />
     </div>
   );
 }
