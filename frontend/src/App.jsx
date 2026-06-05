@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import TopicsPage from './pages/TopicsPage.jsx';
 import InterviewSessionPage from './pages/InterviewSessionPage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -64,7 +65,7 @@ function App() {
       </header>
 
       <Routes>
-        <Route path="/" element={user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/" element={user ? <DashboardPage user={user} /> : <LandingPage />} />
         <Route path="/login" element={<LoginPage onLogin={setUser} />} />
         <Route path="/register" element={<RegisterPage onRegister={setUser} />} />
         <Route
