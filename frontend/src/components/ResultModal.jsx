@@ -40,10 +40,10 @@ export default function ResultModal({ open, onClose, result }) {
   const criteria = parsed.criteria || {};
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card large" role="dialog" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>✕</button>
-        <div className="modal-content analysis-modal">
+    <div className="result-screen" role="dialog" aria-modal="true">
+      <div className="result-screen-card">
+        <button className="result-screen-close" onClick={onClose}>✕</button>
+        <div className="result-screen-content analysis-modal">
           <div className="analysis-top">
             <div className="circular-wrap">
               <svg className="circular" viewBox="0 0 36 36">
@@ -108,7 +108,7 @@ export default function ResultModal({ open, onClose, result }) {
             <div className="muted">{parsed.final_comment || 'Заключение отсутствует.'}</div>
           </div>
 
-          <div className="modal-actions">
+          <div className="result-actions">
             <button className="primary-button" onClick={onClose}>Закрыть</button>
           </div>
         </div>
