@@ -84,7 +84,7 @@ class ProcessAudioAnswer implements ShouldQueue
             */
 
             $url = 'https://stt.api.cloud.yandex.net/speech/v1/stt:recognize?'.http_build_query([
-                'lang' => 'ru-RU',
+                'lang' => 'auto',
                 'folderId' => $folderId,
                 'format' => 'oggopus',
             ]);

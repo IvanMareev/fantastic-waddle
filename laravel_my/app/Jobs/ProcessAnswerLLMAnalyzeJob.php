@@ -84,7 +84,7 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
                     'input' => $prompt,
 
-                    'max_output_tokens' => 400,
+                    'max_output_tokens' => 1500,
                 ]);
 
             Log::info('YANDEX RAW RESPONSE', [
