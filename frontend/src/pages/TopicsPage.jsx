@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import AccessibleButton from '../components/AccessibleButton.jsx';
-import AccessibleCheckbox from '../components/AccessibleCheckbox.jsx';
-import AccessibleTextField from '../components/AccessibleTextField.jsx';
+import QuestionCard from '../components/QuestionCard.jsx';
 import { fetchTopics, fetchQuestionsByTopic, startInterviewSession } from '../api.js';
 
 export default function TopicsPage({ onSessionCreated }) {
   const [topics, setTopics] = useState([]);
   const [selectedTopicId, setSelectedTopicId] = useState('');
+  const [selectedTopicIds, setSelectedTopicIds] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [message, setMessage] = useState('');
@@ -20,19 +20,30 @@ export default function TopicsPage({ onSessionCreated }) {
   }, []);
 
   useEffect(() => {
-    if (!selectedTopicId) {
+    // Load questions for all selected topics
+    if (!selectedTopicIds || selectedTopicIds.length === 0) {
       setQuestions([]);
       setSelectedIds([]);
       return;
     }
 
-    fetchQuestionsByTopic(selectedTopicId)
-      .then((data) => setQuestions(data.data || []))
-      .catch(() => setError('Не удалось загрузить вопросы для темы.'));
-  }, [selectedTopicId]);
+    Promise.all(selectedTopicIds.map((t) => fetchQuestionsByTopic(t).then((r) => r.data || []).catch(() => [])))
+      .then((arrays) => {
+        const merged = arrays.flat();
+        // unique by id
+        const map = new Map();
+        merged.forEach((q) => map.set(q.id, q));
+        setQuestions(Array.from(map.values()));
+      })
+      .catch(() => setError('Не удалось загрузить вопросы для выбранных тем.'));
+  }, [selectedTopicIds]);
 
   const hasSelection = selectedIds.length > 0;
   const selectedTopic = useMemo(() => topics.find((topic) => topic.id === Number(selectedTopicId)), [topics, selectedTopicId]);
+
+  const toggleTopic = (topicId) => {
+    setSelectedTopicIds((prev) => (prev.includes(topicId) ? prev.filter((t) => t !== topicId) : [...prev, topicId]));
+  };
 
   const toggleSelection = (questionId) => {
     setSelectedIds((prev) =>
@@ -41,6 +52,19 @@ export default function TopicsPage({ onSessionCreated }) {
         : [...prev, questionId]
     );
   };
+
+  const randomPick = (n) => {
+    const pool = [...questions];
+    const picked = [];
+    while (pool.length && picked.length < n) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const [q] = pool.splice(idx, 1);
+      picked.push(q.id);
+    }
+    setSelectedIds((prev) => Array.from(new Set([...(prev || []), ...picked])));
+  };
+
+  const clearSelection = () => setSelectedIds([]);
 
   const handleStartSession = async () => {
     setError('');
@@ -62,55 +86,61 @@ export default function TopicsPage({ onSessionCreated }) {
     <div className="card form-block">
       <h2 className="section-title">Темы и вопросы</h2>
       <div className="field-group">
-        <label className="block text-sm font-medium text-slate-800">Выберите тему</label>
-        <select
-          className="input-field"
-          value={selectedTopicId}
-          onChange={(event) => setSelectedTopicId(event.target.value)}
-        >
-          <option value="">-- Выберите тему --</option>
+        <label className="block text-sm font-medium text-slate-800">Выберите темы (можно несколько)</label>
+        <div className="topics-row">
           {topics.map((topic) => (
-            <option key={topic.id} value={topic.id}>
+            <button
+              key={topic.id}
+              type="button"
+              className={`topic-chip ${selectedTopicIds.includes(topic.id) ? 'selected' : ''}`}
+              onClick={() => toggleTopic(topic.id)}
+            >
               {topic.title}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
-      {selectedTopic ? (
+      {selectedTopicIds.length ? (
         <div className="card" style={{ padding: '18px' }}>
-          <h3>{selectedTopic.title}</h3>
-          <p>{selectedTopic.description || 'Описание темы отсутствует.'}</p>
+          <h3>Выбранные темы</h3>
+          <p className="muted">{selectedTopicIds.length} тем(ы) выбраны. Пул вопросов обновлён.</p>
         </div>
       ) : null}
 
       {questions.length ? (
-        <div className="card-grid" style={{ marginTop: '20px' }}>
-          {questions.map((question) => (
-            <div key={question.id} className="card" style={{ padding: '18px' }}>
-              <div className="flex items-center justify-between">
-                <h4>{question.question_text}</h4>
-                <AccessibleCheckbox
-                  label="Выбрать"
-                  isSelected={selectedIds.includes(question.id)}
-                  onChange={() => toggleSelection(question.id)}
-                  value={String(question.id)}
-                  name="selectedQuestions"
-                />
-              </div>
-              <p>{question.expected_answer}</p>
-            </div>
-          ))}
-        </div>
-      ) : selectedTopicId ? (
-        <p className="message">У данной темы нет доступных вопросов.</p>
+        <>
+          <div className="quick-actions" style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <AccessibleButton type="button" onPress={() => randomPick(5)}>Выбрать 5 случайных</AccessibleButton>
+            <AccessibleButton type="button" onPress={() => randomPick(10)}>Выбрать 10 случайных</AccessibleButton>
+            <AccessibleButton type="button" onPress={() => randomPick(20)}>Выбрать 20 случайных</AccessibleButton>
+            <AccessibleButton type="button" onPress={() => randomPick(30)}>Выбрать 30 случайных</AccessibleButton>
+            <AccessibleButton type="button" onPress={() => setSelectedIds(questions.map((q) => q.id))}>Выбрать все</AccessibleButton>
+            <AccessibleButton type="button" onPress={clearSelection}>Очистить выбор</AccessibleButton>
+            <div style={{ marginLeft: 'auto', alignSelf: 'center' }}><strong>Выбрано вопросов: {selectedIds.length}</strong></div>
+          </div>
+
+          <div className="card-grid" style={{ marginTop: '20px' }}>
+            {questions.map((question, idx) => (
+              <QuestionCard
+                key={question.id}
+                order={idx + 1}
+                question={question}
+                selected={selectedIds.includes(question.id)}
+                onClick={() => toggleSelection(question.id)}
+              />
+            ))}
+          </div>
+        </>
+      ) : selectedTopicIds.length ? (
+        <p className="message">У выбранных тем нет доступных вопросов.</p>
       ) : null}
 
       {message ? <div className="success message">{message}</div> : null}
       {error ? <div className="error message">{error}</div> : null}
 
       <AccessibleButton type="button" disabled={!hasSelection || loading} onPress={handleStartSession}>
-        {loading ? 'Создаем сессию...' : 'Создать сессию из выбранных вопросов'}
+        {loading ? 'Создаем сессию...' : `Создать сессию из ${selectedIds.length} вопросов`}
       </AccessibleButton>
     </div>
   );
