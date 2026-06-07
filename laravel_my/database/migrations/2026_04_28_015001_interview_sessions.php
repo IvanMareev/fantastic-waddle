@@ -15,13 +15,14 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
-            $table->integer('total_questions')->default(5);
+            $table->integer('total_questions')->nullable()->default(null);
             $table->integer('correct_answers')->default(0);
 
             $table->string('status', 50)->default('in_progress');
 
             $table->timestamp('started_at')->useCurrent();
             $table->timestamp('finished_at')->nullable();
+
         });
     }
 

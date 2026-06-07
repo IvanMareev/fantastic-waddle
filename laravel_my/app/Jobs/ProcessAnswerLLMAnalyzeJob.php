@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\EnumQuestionStatus;
+use App\Events\AnswerProcessedEvent;
 use App\Models\Prompts;
 use App\Models\Question;
 use App\Models\SessionQuestion;
@@ -11,6 +12,7 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
@@ -23,6 +25,10 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
     public function __construct(private readonly int $sessionQuestionId) {}
 
+    /**
+     * @throws Throwable
+     * @throws ConnectionException
+     */
     public function handle(): void
     {
         $userAnswer = UserAnswer::query()
@@ -132,9 +138,10 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
                 'result' => $parsedResult,
             ]);
 
+            $isCorrect = ($parsedResult['summary_score'] ?? 0) >= 4;
             $userAnswer->update([
                 'ai_explanation' => $result,
-                'is_correct' => ($parsedResult['summary_score'] ?? 0) >= 4,
+                'is_correct' => $isCorrect,
                 'processing_step' => EnumQuestionStatus::Completed,
             ]);
 
@@ -147,5 +154,6 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
             throw $e;
         }
+        event(new AnswerProcessedEvent($sessionQuestion->session_id, $userAnswer, $isCorrect));
     }
 }

@@ -21,6 +21,7 @@ class InterviewSessionController extends Controller
         StartSessionRequest $request,
         StartInterviewSessionService $service
     ): JsonResponse {
+
         $session = $service->execute(
             StartInterviewSessionData::fromRequest($request),
         );
@@ -37,6 +38,7 @@ class InterviewSessionController extends Controller
         InterviewSession $session,
         answerQuestionService $service
     ): JsonResponse {
+
         $answer = $service->execute(
             $session,
             AnswerQuestionData::fromRequest($request)

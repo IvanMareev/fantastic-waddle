@@ -5,7 +5,7 @@ namespace App\DTO;
 use App\Http\Requests\AnswerQuestionRequest;
 use Illuminate\Http\UploadedFile;
 
-final readonly  class AnswerQuestionData
+final readonly class AnswerQuestionData
 {
     public function __construct(
         public UploadedFile $audio,

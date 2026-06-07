@@ -8,18 +8,6 @@ use Illuminate\Http\Request;
 
 class QuestionController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     path="/api/question",
-     *     tags={"Questions"},
-     *     summary="Получить все вопросы",
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список вопросов"
-     *     )
-     * )
-     */
     public function index(): JsonResponse
     {
         $questions = Question::with(['topic', 'difficulty'])->get();
@@ -30,31 +18,6 @@ class QuestionController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/question/{id}",
-     *     tags={"Questions"},
-     *     summary="Получить вопрос по ID",
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID вопроса",
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Вопрос найден"
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Не найден"
-     *     )
-     * )
-     */
     public function show(int $id): JsonResponse
     {
         $question = Question::with(['topic', 'difficulty', 'keywords'])->find($id);
@@ -72,31 +35,6 @@ class QuestionController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/question",
-     *     tags={"Questions"},
-     *     summary="Создать вопрос",
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"topic_id","question_text","expected_answer"},
-     *
-     *             @OA\Property(property="topic_id", type="integer"),
-     *             @OA\Property(property="difficulty_id", type="integer"),
-     *             @OA\Property(property="question_text", type="string"),
-     *             @OA\Property(property="expected_answer", type="string")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=201,
-     *         description="Создано"
-     *     )
-     * )
-     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -115,26 +53,6 @@ class QuestionController extends Controller
         ], 201);
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/question/{id}",
-     *     tags={"Questions"},
-     *     summary="Обновить вопрос",
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Обновлено"
-     *     )
-     * )
-     */
     public function update(Request $request, int $id): JsonResponse
     {
         $question = Question::find($id);
@@ -162,26 +80,6 @@ class QuestionController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/question/{id}",
-     *     tags={"Questions"},
-     *     summary="Удалить вопрос",
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Удалено"
-     *     )
-     * )
-     */
     public function destroy(int $id): JsonResponse
     {
         $question = Question::find($id);
@@ -201,26 +99,6 @@ class QuestionController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/question/topic/{topic_id}",
-     *     tags={"Questions"},
-     *     summary="Вопросы по теме",
-     *
-     *     @OA\Parameter(
-     *         name="topic_id",
-     *         in="path",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список вопросов"
-     *     )
-     * )
-     */
     public function getQuestionsByTopic(int $topic_id): JsonResponse
     {
         $questions = Question::with(['topic', 'difficulty'])

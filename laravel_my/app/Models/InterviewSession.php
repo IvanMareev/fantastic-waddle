@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $topic_id
  * @property int $total_questions
  * @property int $correct_answers
+ * @property int answered_questions
  * @property string $status
  * @property Carbon $started_at
  * @property Carbon|null $finished_at
@@ -40,6 +41,7 @@ class InterviewSession extends Model
         'correct_answers' => 'int',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
+        'answered_questions' => 'int',
     ];
 
     protected $fillable = [
@@ -47,6 +49,7 @@ class InterviewSession extends Model
         'topic_id',
         'total_questions',
         'correct_answers',
+        'answered_questions',
         'status',
         'started_at',
         'finished_at',
