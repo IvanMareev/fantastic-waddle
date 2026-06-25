@@ -36,7 +36,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
+
+    Route::prefix('me')->group(function () {
+        Route::get('/', [AuthController::class, 'me']);
+        Route::get('/sessions', [InterviewSessionController::class, 'getAllSessions']);
+    });
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
@@ -55,8 +60,8 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('interview')->group(function () {
         Route::post('/start', [InterviewSessionController::class, 'startSession']);
         Route::post('{session}/answer', [InterviewSessionController::class, 'answerQuestion']);
-        Route::get('session/{session}/answer', [InterviewSessionController::class, 'getSessionAnswer']);
-
+        Route::get('{session}/cur_answer', [InterviewSessionController::class, 'getSessionAnswer']);
+        Route::get('session/{session}/current_question', [InterviewSessionController::class, 'getCurrentQuestion']);
     });
 
 });

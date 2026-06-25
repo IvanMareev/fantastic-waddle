@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Class InterviewSession
@@ -77,5 +78,15 @@ class InterviewSession extends Model
     public function sessionQuestions(): HasMany
     {
         return $this->hasMany(SessionQuestion::class, 'session_id');
+    }
+
+    public function userAnswers(): HasOne
+    {
+        return $this->hasOne(UserAnswer::class, 'session_question_id');
+    }
+
+    public function user_answers(): HasMany
+    {
+        return $this->hasMany(UserAnswer::class);
     }
 }

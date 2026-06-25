@@ -1,4 +1,4 @@
-const BASE_URL = '/api';
+const BASE_URL = 'http://localhost/api';
 const TOKEN_KEY = 'fantastic_waddle_token';
 
 function getToken() {
@@ -31,12 +31,15 @@ async function request(path, options = {}) {
   });
 
   if (!response.ok) {
+      console.log(response)
     const payload = await response.json().catch(() => ({}));
     const error = new Error(payload.message || response.statusText || 'Network error');
     error.status = response.status;
     error.payload = payload;
     throw error;
   }
+
+    console.log(response)
 
   return response.json().catch(() => ({}));
 }
@@ -62,6 +65,8 @@ export async function register(name, email, password) {
 
   if (data.token) {
     setToken(data.token);
+  } else {
+      console.log(data)
   }
 
   return data;
@@ -110,4 +115,8 @@ export async function fetchSessionAnswer(sessionId, sessionQuestionId) {
   return request(`/interview/session/${sessionId}/answer?${params.toString()}`);
 }
 
+
+export async function fetchSessions() {
+    return request(`/me/sessions?page=1&status=in_progress`)
+}
 export { clearToken };

@@ -21,12 +21,14 @@ export default function RegisterPage({ onRegister }) {
   };
 
   const handleSubmit = async (event) => {
+      alert('sdSA')
     event.preventDefault();
     setError('');
     setLoading(true);
 
     try {
       const result = await register(name, email, password);
+        console.log(result)
       if (result.user) {
         onRegister(result.user);
         navigate('/topics');

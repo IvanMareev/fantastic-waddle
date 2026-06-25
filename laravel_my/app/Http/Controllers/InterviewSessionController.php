@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\DTO\AnswerQuestionData;
+use App\DTO\GetAllSessionsData;
 use App\DTO\GetSessionAnswerData;
 use App\DTO\StartInterviewSessionData;
 use App\Http\Requests\AnswerQuestionRequest;
+use App\Http\Requests\GetAllSessionsRequest;
 use App\Http\Requests\GetSessionAnswerRequest;
 use App\Http\Requests\StartSessionRequest;
+use App\Http\Resources\GetAllSessionsResource;
 use App\Models\InterviewSession;
 use App\Services\answerQuestionService;
+use App\Services\GetAllSessionsService;
+use App\Services\GetCurrentQuestionService;
 use App\Services\GetSessionAnswerService;
 use App\Services\StartInterviewSessionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\Response;
 
 class InterviewSessionController extends Controller
@@ -63,5 +69,23 @@ class InterviewSessionController extends Controller
             'success' => true,
             'data' => $request,
         ]);
+    }
+
+    public function getCurrentQuestion(GetAllSessionsRequest $request, InterviewSession $session, GetCurrentQuestionService $service)
+    {
+        $request = $service->execute(GetAllSessionsData::fromRequest($request), $session);
+
+        return response()->json([
+            'success' => true,
+            'data' => $request,
+        ]);
+    }
+
+    public function getAllSessions(GetAllSessionsRequest $request,
+        GetAllSessionsService $service): AnonymousResourceCollection
+    {
+        return GetAllSessionsResource::collection(
+            $service->execute(GetAllSessionsData::fromRequest($request))
+        );
     }
 }

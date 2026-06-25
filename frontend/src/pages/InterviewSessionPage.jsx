@@ -7,6 +7,7 @@ import InfoCard from '../components/InfoCard.jsx';
 import SoundToggle from '../components/SoundToggle.jsx';
 
 export default function InterviewSessionPage({ session }) {
+    console.log('session_2',session)
   const [sessionQuestions, setSessionQuestions] = useState(session?.session_questions || []);
   const [audioFile, setAudioFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
@@ -132,7 +133,6 @@ export default function InterviewSessionPage({ session }) {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
-      // keep stream for visualizer
       setMediaStream(stream);
 
       playUiSound('start');
@@ -246,6 +246,7 @@ export default function InterviewSessionPage({ session }) {
     return map[s] || s;
   };
 
+    console.log('questionOptions', questionOptions)
   const currentQuestion = questionOptions[currentIndex];
 
   const handleStartInterview = () => {
@@ -297,6 +298,15 @@ export default function InterviewSessionPage({ session }) {
     // advance to next question
     setCurrentIndex((i) => Math.min(i + 1, questionOptions.length));
   };
+
+  function getNextCurrentIdx (currentIdx) {
+
+      if (questionOptions[currentIndex].user_answers === null || questionOptions[currentIndex].user_answers === undefined) {
+          return currentIdx + 1;
+      } else {
+
+      }
+  }
 
   return (
     <div className="card form-block interview-page">

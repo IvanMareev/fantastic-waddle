@@ -8,6 +8,7 @@ import TopicsPage from './pages/TopicsPage.jsx';
 import InterviewSessionPage from './pages/InterviewSessionPage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
+import SessionsPage from "./pages/SessionsPage.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -23,6 +24,7 @@ function App() {
         setUser(null);
       })
       .finally(() => setLoading(false));
+
   }, []);
 
   const handleLogout = async () => {
@@ -51,6 +53,7 @@ function App() {
               <Link to="/topics">Темы и вопросы</Link>
               <Link to="/session">Сессия</Link>
               <Link to="/session/results">Результаты</Link>
+                <Link to="/sessions">Начатые интервью</Link>
               <button className="secondary-button" type="button" onClick={handleLogout}>
                 Выйти
               </button>
@@ -91,6 +94,19 @@ function App() {
             )
           }
         />
+      <Route
+          path="/sessions"
+          element={
+              user ? (
+                  <SessionsPage onSessionContinue={(sessionData) => {
+                      setSession(sessionData);
+                      navigate('/session');
+                  }}/>
+              ) : (
+                  <Navigate to="/login" replace />
+              )
+          }
+      />
         <Route
           path="/session/results"
           element={
