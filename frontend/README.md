@@ -32,3 +32,20 @@
 Прокси настраивается в `frontend/vite.config.js`.
 
 Если бэкенд на другом адресе, измените `target` в секции `server.proxy['/api']`.
+
+### Мок-режим
+
+По умолчанию фронтенд теперь работает через мок-режим, если в `frontend/.env` не задано `VITE_USE_MOCKS=false`.
+
+Для ручного включения/выключения создайте файл `frontend/.env` по примеру `frontend/.env.example`.
+
+```bash
+VITE_USE_MOCKS=true
+VITE_API_BASE_URL=http://localhost/api
+```
+
+Чтобы работать с реальным бэкендом, установите:
+
+```bash
+VITE_USE_MOCKS=false
+```
