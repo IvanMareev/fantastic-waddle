@@ -9,6 +9,7 @@ export default function TopicsPage({ onSessionCreated }) {
   const [selectedTopicIds, setSelectedTopicIds] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [answerModalQuestion, setAnswerModalQuestion] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -128,6 +129,7 @@ export default function TopicsPage({ onSessionCreated }) {
                 question={question}
                 selected={selectedIds.includes(question.id)}
                 onClick={() => toggleSelection(question.id)}
+                onShowAnswer={() => setAnswerModalQuestion(question)}
               />
             ))}
           </div>
@@ -142,6 +144,18 @@ export default function TopicsPage({ onSessionCreated }) {
       <AccessibleButton type="button" disabled={!hasSelection || loading} onPress={handleStartSession}>
         {loading ? 'Создаем сессию...' : `Создать сессию из ${selectedIds.length} вопросов`}
       </AccessibleButton>
+
+      {answerModalQuestion ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <button className="modal-close" type="button" onClick={() => setAnswerModalQuestion(null)}>✕</button>
+            <div className="modal-content">
+              <h3>Ожидаемый ответ</h3>
+              <p className="muted" style={{ marginTop: '12px', lineHeight: 1.8 }}>{answerModalQuestion.expected_answer}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

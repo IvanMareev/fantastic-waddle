@@ -43,8 +43,8 @@ function App() {
     <div className="app-shell container">
       <header className="header">
         <div>
-          <h1>Fantastic Waddle UI</h1>
-          <p>Приложение для управления интервью и вопросами через ваш Laravel API.</p>
+          <h1>Fantastic Waddle</h1>
+          <p>Персональный кабинет подготовки к интервью. Отслеживайте статистику и прогресс в одном месте.</p>
         </div>
         <nav className="nav-links">
           {user ? (
