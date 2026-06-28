@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== 'false';
 const TOKEN_KEY = 'fantastic_waddle_token';
 
