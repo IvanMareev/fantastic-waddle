@@ -314,8 +314,13 @@ export async function uploadAnswer(sessionId, questionId, audioFile) {
 }
 
 export async function fetchSessionAnswer(sessionId, sessionQuestionId) {
-  const params = new URLSearchParams({ session_question_id: sessionQuestionId });
-  return request(`/interview/session/${sessionId}/answer?${params.toString()}`);
+    const form = new FormData();
+    form.append('session_question_id', sessionQuestionId);
+
+    return request(`/interview/${sessionId}/answer`, {
+        method: 'POST',
+        body: form,
+    });
 }
 
 
