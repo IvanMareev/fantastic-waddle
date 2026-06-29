@@ -59,6 +59,11 @@ class SessionQuestion extends Model
         return $this->belongsTo(Question::class);
     }
 
+    public function session(): BelongsTo
+    {
+        return $this->belongsTo(InterviewSession::class, 'session_id');
+    }
+
     /**
      * @return HasOne<UserAnswer, $this>
      */
@@ -68,5 +73,12 @@ class SessionQuestion extends Model
             UserAnswer::class,
             'session_question_id'
         );
+    }
+
+    public function getHasUserAnswerAttribute(): bool
+    {
+        return $this->relationLoaded('userAnswer')
+            ? ! is_null($this->getRelation('userAnswer'))
+            : $this->userAnswer()->exists();
     }
 }

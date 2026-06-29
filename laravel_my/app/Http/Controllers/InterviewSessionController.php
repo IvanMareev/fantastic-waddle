@@ -73,7 +73,7 @@ class InterviewSessionController extends Controller
 
     public function getCurrentQuestion(GetAllSessionsRequest $request, InterviewSession $session, GetCurrentQuestionService $service)
     {
-        $request = $service->execute(GetAllSessionsData::fromRequest($request), $session);
+        $request = $service->execute($session);
 
         return response()->json([
             'success' => true,

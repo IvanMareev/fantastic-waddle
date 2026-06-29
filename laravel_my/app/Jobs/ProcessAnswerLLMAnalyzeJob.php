@@ -154,6 +154,12 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 
             throw $e;
         }
-        event(new AnswerProcessedEvent($sessionQuestion->session_id, $userAnswer, $isCorrect));
+
+        event(new AnswerProcessedEvent(
+            $sessionQuestion->session,
+            $userAnswer,
+            $isCorrect
+        ));
+
     }
 }

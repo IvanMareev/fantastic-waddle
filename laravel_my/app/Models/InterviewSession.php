@@ -84,9 +84,4 @@ class InterviewSession extends Model
     {
         return $this->hasOne(UserAnswer::class, 'session_question_id');
     }
-
-    public function user_answers(): HasMany
-    {
-        return $this->hasMany(UserAnswer::class);
-    }
 }
