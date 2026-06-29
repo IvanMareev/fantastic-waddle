@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import AccessibleButton from '../components/AccessibleButton.jsx';
 import { uploadAnswer, fetchSessionAnswer } from '../api.js';
-import RecordingOrb from '../components/RecordingOrb.jsx';
 import ResultModal from '../components/ResultModal.jsx';
-import InfoCard from '../components/InfoCard.jsx';
-import SoundToggle from '../components/SoundToggle.jsx';
+import InterviewHeader from '../components/InterviewHeader.jsx';
+import InterviewStartScreen from '../components/InterviewStartScreen.jsx';
+import InterviewQuestionPanel from '../components/InterviewQuestionPanel.jsx';
+import InterviewRecordingPanel from '../components/InterviewRecordingPanel.jsx';
+import InterviewResultsView from '../components/InterviewResultsView.jsx';
 
 export default function InterviewSessionPage({ session }) {
-    console.log('session_2',session)
   const [sessionQuestions, setSessionQuestions] = useState(session?.session_questions || []);
   const [audioFile, setAudioFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
@@ -222,19 +222,6 @@ export default function InterviewSessionPage({ session }) {
   const questionOptions = sessionQuestions || [];
   const isBusy = loading || polling;
 
-  const parseAiExplanation = (explanation) => {
-    if (!explanation) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(explanation);
-    } catch {
-      return null;
-    }
-  };
-  const parsedExplanation = parseAiExplanation(answerResult?.ai_explanation);
-
   const translateStatus = (s) => {
     if (!s) return '';
     const map = {
@@ -246,7 +233,6 @@ export default function InterviewSessionPage({ session }) {
     return map[s] || s;
   };
 
-    console.log('questionOptions', questionOptions)
   const currentQuestion = questionOptions[currentIndex];
 
   const handleStartInterview = () => {
@@ -299,122 +285,43 @@ export default function InterviewSessionPage({ session }) {
     setCurrentIndex((i) => Math.min(i + 1, questionOptions.length));
   };
 
-  function getNextCurrentIdx (currentIdx) {
-
-      if (questionOptions[currentIndex].user_answers === null || questionOptions[currentIndex].user_answers === undefined) {
-          return currentIdx + 1;
-      } else {
-
-      }
-  }
-
   return (
     <div className="card form-block interview-page">
-      <div className="header-row">
-        <h2 className="section-title">Сессия интервью #{session.id}</h2>
-        <div className="controls">
-          <SoundToggle onChange={(v) => setSoundEnabled(v)} />
-        </div>
-      </div>
+      <InterviewHeader session={session} soundEnabled={soundEnabled} onSoundChange={setSoundEnabled} />
 
       <div className="message">
         Статус сессии: <span className="badge">{translateStatus(session.status)}</span>
       </div>
 
       {!started ? (
-        <div style={{ marginTop: 18 }}>
-          <InfoCard total={questionOptions.length} avgSeconds={30} onStart={handleStartInterview} />
-        </div>
+        <InterviewStartScreen totalQuestions={questionOptions.length} onStart={handleStartInterview} />
       ) : currentIndex >= questionOptions.length ? (
-        <div className="card" style={{ marginTop: 18, padding: 18 }}>
-          <h3>Интервью завершено</h3>
-          <p>Вы прошли все вопросы сессии.</p>
-          <div style={{ marginTop: 12 }}>
-            <h4>Итоговая статистика</h4>
-            {sessionQuestions?.length ? (
-              <>
-                <p>Всего вопросов: {sessionQuestions.length}</p>
-                <p>Отвечено: {sessionQuestions.filter(q => q.user_answers?.length).length}</p>
-                <div style={{ marginTop: 8 }}>
-                  <strong>Средняя оценка:</strong>{' '}
-                  {(() => {
-                    const scores = sessionQuestions.map((q) => {
-                      const a = q.user_answers?.[0];
-                      const parsed = a?.ai_explanation ? (() => {
-                        try { return JSON.parse(a.ai_explanation); } catch { return null }
-                      })() : null;
-                      return parsed?.summary_score ?? a?.score ?? null;
-                    }).filter((s) => s != null).map(Number);
-                    if (!scores.length) return '—';
-                    const avg = (scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1);
-                    return `${avg}/10`;
-                  })()}
-                </div>
-                <div style={{ marginTop: 12 }}>
-                  <h5>Детали по вопросам</h5>
-                  <div className="card-grid">
-                    {sessionQuestions.map((q, idx) => {
-                      const a = q.user_answers?.[0];
-                      const parsed = a?.ai_explanation ? (() => {
-                        try { return JSON.parse(a.ai_explanation); } catch { return null }
-                      })() : null;
-                      const score = parsed?.summary_score ?? a?.score ?? null;
-                      return (
-                        <div key={q.id} className="card" style={{ padding: 12 }}>
-                          <div style={{ fontWeight:700 }}>Вопрос {idx+1}</div>
-                          <div style={{ marginTop:6 }}>{q.question.question_text}</div>
-                          <div style={{ marginTop:8 }}><strong>Оценка:</strong> {score != null ? `${score}/10` : '—'}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
+        <InterviewResultsView sessionQuestions={sessionQuestions} />
       ) : (
         <div className="interview-stage" style={{ marginTop: 18 }}>
-          <div className="question-panel card">
-            <div className="question-meta">Вопрос {currentIndex + 1} из {questionOptions.length}</div>
-            <h3 className="question-title">{currentQuestion.question.question_text}</h3>
-            <p className="muted">{currentQuestion.question.expected_answer}</p>
-            <div className="timer">Осталось времени: {Math.max(0, 30 - elapsed)} секунд</div>
-          </div>
+          <InterviewQuestionPanel
+            currentQuestion={currentQuestion}
+            currentIndex={currentIndex}
+            questionCount={questionOptions.length}
+            elapsed={elapsed}
+          />
 
-          <div className="rec-panel card">
-            <RecordingOrb stream={mediaStream} isRecording={recording} />
-            <div className="rec-controls">
-              <AccessibleButton type="button" className="secondary-button" onClick={recording ? stopRecording : startRecording}>
-                {recording ? 'Остановить запись' : 'Начать запись'}
-              </AccessibleButton>
-              {audioFile ? (
-                <AccessibleButton type="button" className="secondary-button" onClick={clearRecording}>
-                  Очистить запись
-                </AccessibleButton>
-              ) : null}
-            </div>
-            {recordingError ? <div className="error" style={{ marginTop: '10px' }}>{recordingError}</div> : null}
-            {audioUrl ? (
-              <div style={{ marginTop: '12px' }}>
-                <audio controls src={audioUrl} />
-              </div>
-            ) : null}
-
-            <div style={{ marginTop: 12 }}>
-              {message ? <div className="success">{message}</div> : null}
-              {currentStatus ? (
-                <div className="message">Статус проверки: <strong>{translateStatus(currentStatus)}</strong></div>
-              ) : null}
-              {error ? <div className="error">{error}</div> : null}
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <AccessibleButton type="button" onClick={handleUploadSubmit} disabled={isBusy || !audioFile}>
-                {isBusy ? 'Ожидание...' : 'Отправить ответ'}
-              </AccessibleButton>
-            </div>
-          </div>
+          <InterviewRecordingPanel
+            recording={recording}
+            startRecording={startRecording}
+            stopRecording={stopRecording}
+            clearRecording={clearRecording}
+            audioFile={audioFile}
+            audioUrl={audioUrl}
+            recordingError={recordingError}
+            message={message}
+            currentStatus={currentStatus}
+            error={error}
+            isBusy={isBusy}
+            handleUploadSubmit={handleUploadSubmit}
+            mediaStream={mediaStream}
+            translateStatus={translateStatus}
+          />
         </div>
       )}
 
