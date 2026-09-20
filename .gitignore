@@ -16,7 +16,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor/
+/laravel_my/vendor/
 **/node_modules/
 /storage/*.log
 _ide_helper.php
