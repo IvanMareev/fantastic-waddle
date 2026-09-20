@@ -18,6 +18,7 @@ class UpdateInterviewSessionStatsListener
             $countSessionQuestion = $session->sessionQuestions()->count();
             $session->update([
                 'total_questions' => $countSessionQuestion,
+                'answered_questions' => $session->answered_questions + 1,
             ]);
         }
 

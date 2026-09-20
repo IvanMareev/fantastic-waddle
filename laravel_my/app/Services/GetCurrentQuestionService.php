@@ -11,6 +11,6 @@ class GetCurrentQuestionService
     {
         return SessionQuestion::query()
             ->where('session_id', $session->id)
-            ->with(['question'])->whereDoesntHave('userAnswer')->first();
+            ->with(['question'])->whereDoesntHave('userAnswer')->firstOrFail();
     }
 }

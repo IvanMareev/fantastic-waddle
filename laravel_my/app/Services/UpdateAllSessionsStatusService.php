@@ -6,7 +6,8 @@ use App\DTO\GetAllSessionsData;
 use App\Models\InterviewSession;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class GetAllSessionsService
+// TODO Возможно будет не нужен
+class UpdateAllSessionsStatusService
 {
     public function execute(
         GetAllSessionsData $data,

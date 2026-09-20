@@ -324,7 +324,7 @@ export async function fetchSessions() {
 }
 
 export async function  fetchCurrentQuestion(sessionId) {
-    return request(`session/${sessionId}/current_question`)
+    return request(`/interview/session/${sessionId}/current_question`)
 }
 export { clearToken };
 

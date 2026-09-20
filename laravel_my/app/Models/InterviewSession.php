@@ -77,7 +77,7 @@ class InterviewSession extends Model
      */
     public function sessionQuestions(): HasMany
     {
-        return $this->hasMany(SessionQuestion::class, 'session_id');
+        return $this?->hasMany(SessionQuestion::class, 'session_id');
     }
 
     public function userAnswers(): HasOne

@@ -62,6 +62,17 @@ a:hover {
   border-radius: 20px;
 }
 
+.card-topics {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    padding: 18px;
+    align-items: center;
+    justify-content: space-between;
+
+}
+
 .container {
   width: min(100%, 1600px);
   max-width: 1600px;

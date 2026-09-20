@@ -103,10 +103,14 @@ export default function TopicsPage({ onSessionCreated }) {
       </div>
 
       {selectedTopicIds.length ? (
-        <div className="card" style={{ padding: '18px' }}>
+        <div className="card card-topics" style={{ padding: '18px' }}>
           <h3>Выбранные темы</h3>
           <p className="muted">{selectedTopicIds.length} тем(ы) выбраны. Пул вопросов обновлён.</p>
+            <AccessibleButton type="button" disabled={!hasSelection || loading} onPress={handleStartSession}>
+                {loading ? 'Создаем сессию...' : `Создать сессию из ${selectedIds.length} вопросов`}
+            </AccessibleButton>
         </div>
+
       ) : null}
 
       {questions.length ? (
@@ -140,11 +144,6 @@ export default function TopicsPage({ onSessionCreated }) {
 
       {message ? <div className="success message">{message}</div> : null}
       {error ? <div className="error message">{error}</div> : null}
-
-      <AccessibleButton type="button" disabled={!hasSelection || loading} onPress={handleStartSession}>
-        {loading ? 'Создаем сессию...' : `Создать сессию из ${selectedIds.length} вопросов`}
-      </AccessibleButton>
-
       {answerModalQuestion ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card">
@@ -156,6 +155,7 @@ export default function TopicsPage({ onSessionCreated }) {
           </div>
         </div>
       ) : null}
+
     </div>
   );
 }

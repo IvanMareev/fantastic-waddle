@@ -23,6 +23,8 @@ class ProcessAnswerLLMAnalyzeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 5;
+
     public function __construct(private readonly int $sessionQuestionId) {}
 
     /**

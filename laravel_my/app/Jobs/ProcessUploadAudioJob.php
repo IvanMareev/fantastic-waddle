@@ -28,6 +28,7 @@ class ProcessUploadAudioJob implements ShouldQueue
      */
     public function handle(): void
     {
+
         Log::info('ProcessUploadAudioJob START', [
             'path' => $this->path,
         ]);
@@ -45,12 +46,6 @@ class ProcessUploadAudioJob implements ShouldQueue
                 );
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | LOCAL FILE
-            |--------------------------------------------------------------------------
-            */
-
             $fullPath = storage_path('app/public/'.$this->path);
 
             Log::info('Resolved full path', [
@@ -63,12 +58,6 @@ class ProcessUploadAudioJob implements ShouldQueue
                     'File not found on disk: '.$fullPath
                 );
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | CONVERT WEBM -> OGG OPUS
-            |--------------------------------------------------------------------------
-            */
 
             $convertedPath = storage_path(
                 'app/temp/'.uniqid('audio_').'.ogg'
@@ -142,12 +131,6 @@ class ProcessUploadAudioJob implements ShouldQueue
                 'session_question_id' => $this->sessionQuestionId,
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | CLEANUP
-            |--------------------------------------------------------------------------
-            */
-
             @unlink($convertedPath);
 
             Log::info('ProcessUploadAudioJob SUCCESS', [
@@ -166,9 +149,18 @@ class ProcessUploadAudioJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
+        $UserAnswer = UserAnswer::where('session_question_id', $this->sessionQuestionId)->first();
+
+        $UserAnswer->update([
+            'processing_step' => EnumQuestionStatus::Failed,
+        ]);
+
+        $UserAnswer->refresh();
+
         Log::error('ProcessUploadAudioJob HARD FAILED', [
             'error' => $exception->getMessage(),
             'path' => $this->path,
         ]);
+
     }
 }

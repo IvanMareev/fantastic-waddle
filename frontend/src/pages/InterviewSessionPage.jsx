@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { uploadAnswer, fetchSessionAnswer } from '../api.js';
+import {uploadAnswer, fetchSessionAnswer, fetchCurrentQuestion} from '../api.js';
 import ResultModal from '../components/ResultModal.jsx';
 import InterviewHeader from '../components/InterviewHeader.jsx';
 import InterviewStartScreen from '../components/InterviewStartScreen.jsx';
@@ -32,6 +32,7 @@ export default function InterviewSessionPage({ session }) {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
+
     setSessionQuestions(session?.session_questions || []);
   }, [session]);
 
@@ -46,6 +47,9 @@ export default function InterviewSessionPage({ session }) {
     const pollAnswerStatus = async () => {
       try {
         const result = await fetchSessionAnswer(session.id, Number(pollingQuestionId));
+        if (result.data.processing_step === 'failed') {
+            alert("Что-то пошло не так, этот вопрос будет пропущен")
+        }
         const status = result.status || result.data?.processing_step || '';
         const backendMsg = result.message || '';
 
@@ -75,6 +79,7 @@ export default function InterviewSessionPage({ session }) {
             setModalOpen(true);
             playUiSound('result');
           }
+          await loadCurrentQuestion(session.id)
         }
       } catch (err) {
         if (isCancelled) {
@@ -235,9 +240,35 @@ export default function InterviewSessionPage({ session }) {
 
   const currentQuestion = questionOptions[currentIndex];
 
-  const handleStartInterview = () => {
-    setStarted(true);
-    setCurrentIndex(0);
+
+    const loadCurrentQuestion = async (sessionId) => {
+        try {
+            const res = await fetchCurrentQuestion(sessionId);
+
+            const idx = questionOptions.findIndex(
+                q => q.id === res.data.id
+            );
+
+            if (idx !== -1) {
+                setCurrentIndex(idx);
+            } else {
+                // Вопрос не найден — считаем интервью завершенным
+                setCurrentIndex(questionOptions.length);
+            }
+        } catch (error) {
+            console.error('Не удалось получить текущий вопрос:', error);
+
+            // Если API сообщает, что текущего вопроса нет
+            if (error.response?.status === 404) {
+                setCurrentIndex(questionOptions.length);
+            }
+        }
+    };
+
+  const handleStartInterview = async () => {
+      setStarted(true);
+
+      await loadCurrentQuestion(session.id)
   };
 
   const handleUploadSubmit = async (e) => {
@@ -278,11 +309,10 @@ export default function InterviewSessionPage({ session }) {
     }
   };
 
-  const onModalClose = () => {
-    setModalOpen(false);
-    setAnswerResult(null);
-    // advance to next question
-    setCurrentIndex((i) => Math.min(i + 1, questionOptions.length));
+  const onModalClose = async () => {
+      setModalOpen(false);
+      setAnswerResult(null);
+
   };
 
   return (

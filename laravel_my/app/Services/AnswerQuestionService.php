@@ -13,7 +13,7 @@ use App\Models\InterviewSession;
 use App\Models\UserAnswer;
 use Illuminate\Support\Facades\Bus;
 
-class answerQuestionService
+class AnswerQuestionService
 {
     /**
      * @throws SessionQuestionNotFoundException
