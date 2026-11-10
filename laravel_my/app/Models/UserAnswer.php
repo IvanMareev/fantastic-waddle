@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool|null $is_correct
  * @property string|null $ai_explanation
  * @property string|null $ai_audio_url
+ * @property string|null $processed_transcript
+ * @property string|null $stt_operation_id
  * @property Carbon $created_at
  * @property string|null $processing_step
  * @property SessionQuestion $session_question
@@ -38,12 +40,14 @@ class UserAnswer extends Model
         'session_question_id',
         'audio_file_url',
         'transcript',
+        'processed_transcript',
         'is_correct',
         'ai_explanation',
         'ai_audio_url',
         'user_id',
         'created_at',
         'processing_step',
+        'stt_operation_id',
     ];
 
     /**

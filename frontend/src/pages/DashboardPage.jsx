@@ -7,46 +7,47 @@ export default function DashboardPage({ user }) {
   ];
 
   return (
-    <main className="dashboard-page">
-      <section className="dashboard-hero card form-block">
-        <div>
-          <p className="eyebrow">Личный кабинет</p>
-          <h2 className="section-title">Добро пожаловать, {user?.name || 'пользователь'}!</h2>
-          <p className="dashboard-message">Здесь отображается ваша текущая статистика подготовки и последние результаты интервью.</p>
+    <main className="page">
+      <section className="dashboard-hero card">
+        <div className="dashboard-hero__text">
+          <h1 className="page-title">Добро пожаловать, {user?.name || 'пользователь'}!</h1>
+          <p className="page-subtitle">
+            Здесь отображается ваша текущая статистика подготовки и последние результаты интервью.
+          </p>
         </div>
-        <div className="profile-chip">
-          <span>Активно</span>
-          <strong>{user?.email || 'example@mail.com'}</strong>
-        </div>
+        <span className="badge badge--accent">
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+          Активно
+        </span>
       </section>
 
-      <section className="dashboard-stats card-grid">
+      <section className="grid grid--stats">
         {stats.map((item) => (
-          <article key={item.label} className="dashboard-stat-card card">
-            <p className="stat-label">{item.label}</p>
-            <h3 className="stat-value">{item.value}</h3>
-            <p className="stat-note">{item.description}</p>
+          <article key={item.label} className="stat-card card card--hover">
+            <p className="stat-card__label">{item.label}</p>
+            <h3 className="stat-card__value">{item.value}</h3>
+            <p className="stat-card__note">{item.description}</p>
           </article>
         ))}
       </section>
 
-      <section className="dashboard-overview card form-block">
-        <div className="overview-header">
-          <h3>Последний прогресс</h3>
-          <span>Обновлено недавно</span>
+      <section className="card">
+        <div className="page-header">
+          <h2 style={{ margin: 0, fontSize: 20 }}>Последний прогресс</h2>
+          <p className="page-subtitle" style={{ fontSize: 14 }}>Обновлено недавно</p>
         </div>
-        <div className="overview-grid">
-          <div>
-            <p className="overview-title">Последняя сессия</p>
-            <p className="overview-value">Тема: Архитектура приложений</p>
+        <div className="overview-grid" style={{ marginTop: 18 }}>
+          <div className="overview-item">
+            <p className="overview-item__title">Последняя сессия</p>
+            <p className="overview-item__value">Тема: Архитектура приложений</p>
           </div>
-          <div>
-            <p className="overview-title">Результат</p>
-            <p className="overview-value">8.6 / 10</p>
+          <div className="overview-item">
+            <p className="overview-item__title">Результат</p>
+            <p className="overview-item__value">8.6 / 10</p>
           </div>
-          <div>
-            <p className="overview-title">Рекомендация</p>
-            <p className="overview-value">Уточняйте примеры и структуру ответа.</p>
+          <div className="overview-item">
+            <p className="overview-item__title">Рекомендация</p>
+            <p className="overview-item__value">Уточняйте примеры и структуру ответа.</p>
           </div>
         </div>
       </section>

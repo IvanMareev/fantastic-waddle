@@ -1,7 +1,7 @@
 import { useTextField } from '@react-aria/textfield';
 import { useRef } from 'react';
 
-export default function AccessibleTextField({ label, errorMessage, onChange, ...props }) {
+export default function AccessibleTextField({ label, errorMessage, hint, onChange, ...props }) {
   const ref = useRef();
   const { labelProps, inputProps } = useTextField({ label, ...props }, ref);
   const { onChange: ariaOnChange, ...restInputProps } = inputProps;
@@ -21,18 +21,18 @@ export default function AccessibleTextField({ label, errorMessage, onChange, ...
   };
 
   return (
-    <div className="field-group">
-      <label {...labelProps} className="block text-sm font-medium text-slate-800">
+    <div className="field">
+      <label {...labelProps} className="field__label">
         {label}
       </label>
       <input
         {...restInputProps}
         onChange={handleChange}
         ref={ref}
-        className="input-field"
+        className={`field__input ${errorMessage ? 'field__input--invalid' : ''}`}
         aria-invalid={errorMessage ? 'true' : 'false'}
       />
-      {errorMessage ? <div className="error">{errorMessage}</div> : null}
+      {errorMessage ? <div className="field__error">{errorMessage}</div> : hint ? <div className="field__hint">{hint}</div> : null}
     </div>
   );
 }

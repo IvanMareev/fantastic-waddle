@@ -6,7 +6,6 @@ use App\DTO\AnswerQuestionData;
 use App\Enums\EnumSessionStatus;
 use App\Exceptions\SessionNotActiveException;
 use App\Exceptions\SessionQuestionNotFoundException;
-use App\Jobs\ProcessAnswerLLMAnalyzeJob;
 use App\Jobs\ProcessAudioAnswer;
 use App\Jobs\ProcessUploadAudioJob;
 use App\Models\InterviewSession;
@@ -54,9 +53,6 @@ class AnswerQuestionService
                 $data->sessionQuestionId
             ),
             new ProcessAudioAnswer(
-                $data->sessionQuestionId
-            ),
-            new ProcessAnswerLLMAnalyzeJob(
                 $data->sessionQuestionId
             ),
         ])->dispatch();

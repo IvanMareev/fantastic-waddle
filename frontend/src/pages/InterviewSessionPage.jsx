@@ -217,9 +217,11 @@ export default function InterviewSessionPage({ session }) {
 
   if (!session) {
     return (
-      <div className="card form-block">
-        <h2 className="section-title">Сессия интервью</h2>
-        <p className="message">Сначала создайте новую сессию на странице «Темы и вопросы».</p>
+      <div className="page">
+        <div className="empty">
+          <p className="empty__title">Сессия не выбрана</p>
+          <p className="empty__text">Сначала создайте новую сессию на странице «Темы и вопросы».</p>
+        </div>
       </div>
     );
   }
@@ -315,20 +317,38 @@ export default function InterviewSessionPage({ session }) {
 
   };
 
+  const badgeVariant =
+    session.status === 'completed' ? 'badge--success'
+    : session.status === 'failed' ? 'badge--danger'
+    : 'badge--accent';
+
   return (
-    <div className="card form-block interview-page">
+    <div className="page">
       <InterviewHeader session={session} soundEnabled={soundEnabled} onSoundChange={setSoundEnabled} />
 
-      <div className="message">
-        Статус сессии: <span className="badge">{translateStatus(session.status)}</span>
+      <div className="session-status">
+        Статус сессии:
+        <span className={`badge ${badgeVariant}`}>{translateStatus(session.status)}</span>
       </div>
+
+      {error ? (
+        <div className="alert alert--error"><span className="alert__icon" aria-hidden>!</span><div>{error}</div></div>
+      ) : null}
+      {!error && (message || isBusy) ? (
+        <div className="alert alert--info">
+          <span className="alert__icon" aria-hidden>
+            {isBusy ? <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> : 'i'}
+          </span>
+          <div>{isBusy ? 'Обработка ответа…' : message}</div>
+        </div>
+      ) : null}
 
       {!started ? (
         <InterviewStartScreen totalQuestions={questionOptions.length} onStart={handleStartInterview} />
       ) : currentIndex >= questionOptions.length ? (
         <InterviewResultsView sessionQuestions={sessionQuestions} />
       ) : (
-        <div className="interview-stage" style={{ marginTop: 18 }}>
+        <div className="interview-stage">
           <InterviewQuestionPanel
             currentQuestion={currentQuestion}
             currentIndex={currentIndex}
@@ -344,10 +364,7 @@ export default function InterviewSessionPage({ session }) {
             audioFile={audioFile}
             audioUrl={audioUrl}
             recordingError={recordingError}
-            message={message}
             currentStatus={currentStatus}
-            error={error}
-            isBusy={isBusy}
             handleUploadSubmit={handleUploadSubmit}
             mediaStream={mediaStream}
             translateStatus={translateStatus}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
@@ -12,9 +12,9 @@ function scoreText(score) {
 }
 
 function colorFor(value) {
-  if (value >= 7) return '#16a34a';
-  if (value >= 4) return '#f59e0b';
-  return '#ef4444';
+  if (value >= 7) return '#22a06b';
+  if (value >= 4) return '#d9971f';
+  return '#d8454c';
 }
 
 function parseExplanation(ai_explanation) {
@@ -34,83 +34,89 @@ export default function ResultModal({ open, onClose, result }) {
 
   const data = result.data || result;
   const parsed = parseExplanation(data.ai_explanation) || {};
-  const summary = parsed.summary_score ?? data.summary_score ?? parsed.summary_score ?? null;
-  const overallPercent = clamp(Number(summary || 0), 0, 10) * 10; // 0-100
+  const summary = parsed.summary_score ?? data.summary_score ?? null;
+  const overallPercent = clamp(Number(summary || 0), 0, 10) * 10;
 
   const criteria = parsed.criteria || {};
 
   return (
-    <div className="result-screen" role="dialog" aria-modal="true">
-      <div className="result-screen-card">
-        <button className="result-screen-close" onClick={onClose}>✕</button>
-        <div className="result-screen-content analysis-modal">
-          <div className="analysis-top">
-            <div className="circular-wrap">
-              <svg className="circular" viewBox="0 0 36 36">
-                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path className="circle" strokeDasharray={`${overallPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: colorFor(summary) }} />
-              </svg>
-              <div className="circular-below">
-                <div className="score-num">{summary != null ? `${summary}/10` : '—'}</div>
-                <div className="score-text">{scoreText(summary)}</div>
-                <div className="answer-status">{data.is_correct ? '✅ Ответ верный' : '❌ Ответ неверный'}</div>
-              </div>
-            </div>
+    <div className="result-overlay" role="dialog" aria-modal="true">
+      <div className="result-card">
+        <button className="modal-close" aria-label="Закрыть" onClick={onClose}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
 
-            <div className="transcript-card card">
-              <h4>Ваш ответ</h4>
-              <div className="transcript-text">{data.transcript || 'Ответ не распознан.'}</div>
+        <div className="result-top">
+          <div className="circular-wrap">
+            <svg className="circular" viewBox="0 0 36 36">
+              <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path className="circle" strokeDasharray={`${overallPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: colorFor(summary) }} />
+            </svg>
+            <div className="score-num" style={{ marginTop: 8 }}>{summary != null ? `${summary}/10` : '—'}</div>
+            <div className="score-text">{scoreText(summary)}</div>
+            <div className="answer-status" style={{ color: data.is_correct ? 'var(--success)' : 'var(--danger)' }}>
+              {data.is_correct ? 'Ответ верный' : 'Ответ неверный'}
             </div>
           </div>
 
-          <div className="criteria-section">
-            <h4>Детальная оценка по критериям</h4>
-            <div className="criteria-grid">
+          <div className="transcript-card card">
+            <span className="result-section__title">Транскрипт ответа</span>
+            <div className="final-comment">{data.transcript || 'Ответ не распознан.'}</div>
+          </div>
+        </div>
+
+        {Object.keys(criteria).length ? (
+          <div className="result-section">
+            <h3 className="result-section__title">Оценка по критериям</h3>
+            <div className="criteria-grid criteria-grid--3">
               {Object.entries(criteria).map(([k, v]) => (
                 <div key={k} className="criteria-card">
-                  <div className="criteria-key">{k}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-                    <div style={{ fontWeight:700 }}>{v.score}/10</div>
-                    <div style={{ flex: 1 }}>
-                      <div className="criteria-bar-outer">
-                        <div className="criteria-bar-inner" style={{ width: `${clamp(v.score,0,10) * 10}%`, background: colorFor(v.score) }} />
-                      </div>
-                    </div>
+                  <div className="criteria-card__head">
+                    <span className="criteria-card__key">{k}</span>
+                    <span className="criteria-card__score" style={{ color: colorFor(v.score) }}>{v.score}/10</span>
                   </div>
-                  <div className="criteria-comment muted" style={{ marginTop: 8 }}>{v.comment}</div>
+                  <div className="criteria-bar-outer">
+                    <div className="criteria-bar-inner" style={{ width: `${clamp(v.score, 0, 10) * 10}%`, background: colorFor(v.score) }} />
+                  </div>
+                  {v.comment ? <p className="criteria-card__comment">{v.comment}</p> : null}
                 </div>
               ))}
             </div>
           </div>
+        ) : null}
 
-          <div className="strengths-weaknesses">
-            <div className="strengths card">
-              <h4>Что получилось хорошо</h4>
-              {parsed.strengths?.length ? (
-                <ul>
-                  {parsed.strengths.map((s, i) => <li key={i}>✓ {s}</li>)}
-                </ul>
-              ) : <div className="muted">Сильные стороны не обнаружены.</div>}
-            </div>
-
-            <div className="weaknesses card highlight">
-              <h4>Что нужно улучшить</h4>
-              {parsed.weaknesses?.length ? (
-                <ul>
-                  {parsed.weaknesses.map((s, i) => <li key={i}>✗ {s}</li>)}
-                </ul>
-              ) : <div className="muted">Пока не обнаружено.</div>}
-            </div>
+        <div className="strengths-weaknesses">
+          <div className="strengths card">
+            <h4>Что получилось хорошо</h4>
+            {parsed.strengths?.length ? (
+              <ul>
+                {parsed.strengths.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            ) : <span className="final-comment">Сильные стороны не обнаружены.</span>}
           </div>
 
-          <div className="final-comment card">
-            <h4>Заключение AI</h4>
-            <div className="muted">{parsed.final_comment || 'Заключение отсутствует.'}</div>
+          <div className="weaknesses card">
+            <h4>Что нужно улучшить</h4>
+            {parsed.weaknesses?.length ? (
+              <ul>
+                {parsed.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            ) : <span className="final-comment">Пока не обнаружено.</span>}
           </div>
+        </div>
 
-          <div className="result-actions">
-            <button className="primary-button" onClick={onClose}>Закрыть</button>
+        {parsed.final_comment ? (
+          <div className="result-section">
+            <h3 className="result-section__title">Заключение AI</h3>
+            <p className="final-comment">{parsed.final_comment}</p>
           </div>
+        ) : null}
+
+        <div className="result-actions">
+          <button type="button" className="btn btn--primary" onClick={onClose}>Закрыть</button>
         </div>
       </div>
     </div>
